@@ -7,5 +7,6 @@ export async function GET() {
     status: 'ok',
     service: 'tunebox-web',
     time: new Date().toISOString(),
+    trustedOrigins: 'dynamic-v2',
   });
 }
