@@ -1,4 +1,4 @@
-import { Music, Heart, Library } from 'lucide-react';
+import { Heart, Library } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { prisma } from '@/lib/db';

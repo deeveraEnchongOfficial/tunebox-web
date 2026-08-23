@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import { ListMusic, Plus } from 'lucide-react';
+import { ListMusic } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';

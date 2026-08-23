@@ -2,6 +2,8 @@
 
 > Full-stack web app + backend API for TuneBox — a personal music library.
 > **Independent project.** The Flutter mobile app (`../mobile`) is a separate repo and communicates with this API over HTTPS.
+>
+> **Live:** https://tunebox-web-chi.vercel.app
 
 ## Features
 
@@ -47,7 +49,7 @@ pnpm prisma:db push     # sync schema to MongoDB
 pnpm dev
 ```
 
-App at `http://localhost:3000`. Health check: `GET /api/health`.
+App at `http://localhost:3000` (dev) or `https://tunebox-web-chi.vercel.app` (production). Health check: `GET /api/health`.
 
 ## Environment variables
 
@@ -55,8 +57,8 @@ App at `http://localhost:3000`. Health check: `GET /api/health`.
 | --- | --- |
 | `DATABASE_URL` | MongoDB Atlas connection string |
 | `BETTER_AUTH_SECRET` | Auth secret (generate with `openssl rand -base64 32`) |
-| `BETTER_AUTH_URL` | App URL (`http://localhost:3000` for dev) |
-| `NEXT_PUBLIC_APP_URL` | Public app URL (same as above for dev) |
+| `BETTER_AUTH_URL` | App URL (`http://localhost:3000` for dev, `https://tunebox-web-chi.vercel.app` for prod) |
+| `NEXT_PUBLIC_APP_URL` | Public app URL (same as `BETTER_AUTH_URL`) |
 | `YOUTUBE_API_KEY` | YouTube Data API v3 key (optional — enables real metadata) |
 
 ## Scripts

@@ -151,6 +151,7 @@ export function GlobalPlayer() {
       try { p?.destroy(); } catch {}
       setYtPlayer(null);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isPlaying handled by separate effect to avoid recreating player
   }, [current?.id, current?.sourceUrl, current?.sourceType, ytApiReady, playerId]);
 
   React.useEffect(() => {
