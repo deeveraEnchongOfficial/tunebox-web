@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Music, Loader2 } from 'lucide-react';
+import { Play, Pause, Loader2 } from 'lucide-react';
 
 import { usePlayer, type QueueItem } from '@/lib/player';
 
 interface PlayButtonProps {
   track: QueueItem;
   queue?: QueueItem[];
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export function PlayButton({ track, queue, size = 'md' }: PlayButtonProps) {
@@ -16,7 +16,10 @@ export function PlayButton({ track, queue, size = 'md' }: PlayButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const isCurrent = player.current?.id === track.id;
-  const iconSize = size === 'sm' ? 'h-3 w-3' : 'h-4 w-4';
+  const isPlaying = isCurrent && player.isPlaying;
+  const dims =
+    size === 'lg' ? 'h-14 w-14' : size === 'sm' ? 'h-8 w-8' : 'h-10 w-10';
+  const iconSize = size === 'lg' ? 'h-6 w-6' : size === 'sm' ? 'h-3 w-3' : 'h-4 w-4';
 
   function handleClick() {
     if (isCurrent) {
@@ -31,18 +34,15 @@ export function PlayButton({ track, queue, size = 'md' }: PlayButtonProps) {
   return (
     <button
       onClick={handleClick}
-      className={
-        size === 'sm'
-          ? 'flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90'
-          : 'flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90'
-      }
+      className={`flex ${dims} items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/40 hover:scale-105 hover:bg-green-hover transition-all`}
+      aria-label={isPlaying ? 'Pause' : 'Play'}
     >
       {loading ? (
         <Loader2 className={`${iconSize} animate-spin`} />
-      ) : isCurrent && player.isPlaying ? (
-        <Music className={iconSize} />
+      ) : isPlaying ? (
+        <Pause className={iconSize} />
       ) : (
-        <Music className={iconSize} />
+        <Play className={`${iconSize} translate-x-[1px]`} />
       )}
     </button>
   );

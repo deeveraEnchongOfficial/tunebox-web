@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Link as LinkIcon, Loader2, Music, Heart, ListPlus, Bookmark } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TopBar } from '../top-bar';
 
 interface ResolvedMusic {
   sourceType: string;
@@ -86,15 +86,17 @@ export default function AddMusicPage() {
   }
 
   return (
-    <div className="p-8 w-full max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-2">Add music</h1>
-      <p className="text-muted-foreground mb-8">Paste a YouTube link to save it to your library.</p>
+    <div className="relative">
+      <div className="absolute inset-x-0 top-0 h-64 bg-linear-to-b from-primary/30 via-primary/5 to-transparent pointer-events-none" />
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">YouTube URL</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <TopBar />
+
+      <div className="relative px-4 md:px-6 pb-12 max-w-3xl mx-auto">
+        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-2">Add music</h1>
+        <p className="text-muted-foreground mb-8">Paste a YouTube link to save it to your library.</p>
+
+        <div className="rounded-lg bg-card p-6 mb-6">
+          <h2 className="text-lg font-bold mb-4">YouTube URL</h2>
           <form onSubmit={handleResolve} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="url">Link</Label>
@@ -102,7 +104,7 @@ export default function AddMusicPage() {
                 <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="url"
-                  className="pl-10"
+                  className="pl-10 bg-input border-white/10"
                   placeholder="https://www.youtube.com/watch?v=..."
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -111,7 +113,7 @@ export default function AddMusicPage() {
               </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={resolving || !url.trim()}>
+            <Button type="submit" disabled={resolving || !url.trim()} className="w-fit">
               {resolving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -122,19 +124,17 @@ export default function AddMusicPage() {
               )}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
 
-      {resolved && (
-        <Card>
-          <CardContent className="p-6">
+        {resolved && (
+          <div className="rounded-lg bg-card p-6">
             <div className="flex gap-4">
               {resolved.thumbnailUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={resolved.thumbnailUrl}
                   alt={resolved.title}
-                  className="h-24 w-24 rounded-lg object-cover"
+                  className="h-24 w-24 rounded-lg object-cover shadow-lg"
                 />
               ) : (
                 <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-muted">
@@ -142,7 +142,7 @@ export default function AddMusicPage() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg truncate">{resolved.title}</h3>
+                <h3 className="font-bold text-lg truncate">{resolved.title}</h3>
                 {resolved.artist && (
                   <p className="text-muted-foreground truncate">{resolved.artist}</p>
                 )}
@@ -164,7 +164,7 @@ export default function AddMusicPage() {
                 <p className="font-medium">Saved to your library!</p>
               </div>
             ) : (
-              <div className="mt-6 flex gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Button onClick={handleSave} disabled={saving}>
                   {saving ? (
                     <>
@@ -178,19 +178,19 @@ export default function AddMusicPage() {
                     </>
                   )}
                 </Button>
-                <Button variant="outline" disabled>
+                <Button variant="secondary" disabled>
                   <Heart className="h-4 w-4" />
                   Favorite
                 </Button>
-                <Button variant="outline" disabled>
+                <Button variant="secondary" disabled>
                   <ListPlus className="h-4 w-4" />
                   Add to playlist
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

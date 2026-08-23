@@ -1,9 +1,9 @@
 import { Heart, Library } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
 import { MusicList } from './music-list';
+import { TopBar } from '../top-bar';
 
 export default async function LibraryPage() {
   const user = await getSessionUser();
@@ -48,30 +48,44 @@ export default async function LibraryPage() {
   const favoriteMusic = favorites.map((f) => f.music).filter((m) => m !== null);
 
   return (
-    <div className="p-8 w-full max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-2">Your library</h1>
-      <p className="text-muted-foreground mb-8">{music.length} songs in your collection.</p>
+    <div className="relative">
+      <div className="absolute inset-x-0 top-0 h-64 bg-linear-to-b from-indigo-600/30 via-indigo-600/5 to-transparent pointer-events-none" />
 
-      {music.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+      <TopBar />
+
+      <div className="relative px-4 md:px-6 pb-12">
+        <div className="flex items-end gap-4 mb-6">
+          <div className="flex h-16 w-16 md:h-24 md:w-24 items-center justify-center rounded bg-linear-to-br from-indigo-500 to-purple-700 shadow-lg shrink-0">
+            <Library className="h-8 w-8 md:h-12 md:w-12 text-white" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Playlist</p>
+            <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight truncate">Your Library</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              {music.length} {music.length === 1 ? 'song' : 'songs'} in your collection
+            </p>
+          </div>
+        </div>
+
+        {music.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
             <Library className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">Your library is empty. Add some music to get started.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <MusicList music={music} favoriteIds={favoriteIds} />
-      )}
-
-      {favoriteMusic.length > 0 && (
-        <div className="mt-12">
-          <div className="flex items-center gap-2 mb-4">
-            <Heart className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Favorites</h2>
           </div>
-          <MusicList music={favoriteMusic} favoriteIds={favoriteIds} />
-        </div>
-      )}
+        ) : (
+          <MusicList music={music} favoriteIds={favoriteIds} />
+        )}
+
+        {favoriteMusic.length > 0 && (
+          <div className="mt-12">
+            <div className="flex items-center gap-2 mb-4">
+              <Heart className="h-5 w-5 text-primary fill-primary" />
+              <h2 className="text-xl md:text-2xl font-bold">Liked Songs</h2>
+            </div>
+            <MusicList music={favoriteMusic} favoriteIds={favoriteIds} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

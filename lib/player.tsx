@@ -24,6 +24,7 @@ interface PlayerState {
   muted: boolean;
   repeat: boolean;
   shuffle: boolean;
+  expanded: boolean;
 }
 
 interface PlayerContextValue extends PlayerState {
@@ -40,6 +41,7 @@ interface PlayerContextValue extends PlayerState {
   toggleRepeat: () => void;
   toggleShuffle: () => void;
   setReady: (ready: boolean) => void;
+  setExpanded: (expanded: boolean) => void;
 }
 
 const PlayerContext = React.createContext<PlayerContextValue | null>(null);
@@ -55,6 +57,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [muted, setMutedState] = React.useState(false);
   const [repeat, setRepeat] = React.useState(false);
   const [shuffle, setShuffle] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
 
   const current = queue[index] ?? null;
 
@@ -159,6 +162,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         muted,
         repeat,
         shuffle,
+        expanded,
         current,
         playTrack,
         playQueue,
@@ -172,6 +176,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         toggleRepeat,
         toggleShuffle,
         setReady: setIsReady,
+        setExpanded,
       }}
     >
       {children}

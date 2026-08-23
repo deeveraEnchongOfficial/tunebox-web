@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { ListMusic } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
 import { CreatePlaylistDialog } from './create-playlist-dialog';
+import { TopBar } from '../top-bar';
 
 export default async function PlaylistsPage() {
   const user = await getSessionUser();
@@ -12,50 +12,84 @@ export default async function PlaylistsPage() {
 
   const playlists = await prisma.playlist.findMany({
     where: { userId: user.id },
-    include: { _count: { select: { items: true } } },
+    include: {
+      items: {
+        take: 1,
+        include: {
+          music: {
+            select: {
+              id: true,
+              title: true,
+              artist: true,
+              channelName: true,
+              thumbnailUrl: true,
+              durationSeconds: true,
+              sourceUrl: true,
+              sourceType: true,
+            },
+          },
+        },
+        orderBy: { position: 'asc' },
+      },
+      _count: { select: { items: true } },
+    },
     orderBy: { createdAt: 'desc' },
   });
 
   return (
-    <div className="p-8 w-full max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Playlists</h1>
-          <p className="text-muted-foreground">{playlists.length} playlists</p>
-        </div>
-        <CreatePlaylistDialog />
-      </div>
+    <div className="relative">
+      <div className="absolute inset-x-0 top-0 h-64 bg-linear-to-b from-purple-700/30 via-purple-700/5 to-transparent pointer-events-none" />
 
-      {playlists.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+      <TopBar />
+
+      <div className="relative px-4 md:px-6 pb-12">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">Playlists</h1>
+          <CreatePlaylistDialog />
+        </div>
+
+        {playlists.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
             <ListMusic className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground mb-4">No playlists yet.</p>
             <CreatePlaylistDialog />
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {playlists.map((playlist) => (
-            <Link key={playlist.id} href={`/app/playlists/${playlist.id}`}>
-              <Card className="hover:border-primary transition-colors cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex h-32 items-center justify-center rounded-lg bg-muted mb-4">
-                    <ListMusic className="h-10 w-10 text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1 sm:gap-3">
+            {playlists.map((playlist) => {
+              const firstTrack = playlist.items[0]?.music;
+              return (
+                <Link
+                  key={playlist.id}
+                  href={`/app/playlists/${playlist.id}`}
+                  className="group relative flex flex-col gap-3 p-3 sm:p-4 rounded-lg bg-card hover:bg-secondary transition-colors duration-300"
+                >
+                  <div className="relative aspect-square shrink-0">
+                    {firstTrack?.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={firstTrack.thumbnailUrl}
+                        alt={playlist.name}
+                        className="h-full w-full rounded-md object-cover shadow-lg"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center rounded-md bg-linear-to-br from-indigo-500/40 to-purple-600/40">
+                        <ListMusic className="h-10 w-10 text-white/80" />
+                      </div>
+                    )}
                   </div>
-                  <h3 className="font-semibold truncate">{playlist.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {playlist._count.items} {playlist._count.items === 1 ? 'song' : 'songs'}
-                  </p>
-                  {playlist.description && (
-                    <p className="text-sm text-muted-foreground mt-1 truncate">{playlist.description}</p>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{playlist.name}</p>
+                    <p className="truncate text-xs text-muted-foreground mt-1">
+                      {playlist._count.items} {playlist._count.items === 1 ? 'song' : 'songs'}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
