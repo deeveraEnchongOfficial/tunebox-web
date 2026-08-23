@@ -6,7 +6,7 @@
   "description": "TuneBox backend API — personal music library. Independent Next.js app.",
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
