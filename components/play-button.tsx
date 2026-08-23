@@ -42,7 +42,7 @@ export function PlayButton({ track, queue, size = 'md' }: PlayButtonProps) {
       ) : isPlaying ? (
         <Pause className={iconSize} />
       ) : (
-        <Play className={`${iconSize} translate-x-[1px]`} />
+        <Play className={`${iconSize} translate-x-px`} />
       )}
     </button>
   );

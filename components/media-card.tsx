@@ -89,7 +89,7 @@ export function MediaCard({
             {isPlaying ? (
               <Pause className="h-5 w-5" />
             ) : (
-              <Play className="h-5 w-5 translate-x-[1px]" />
+              <Play className="h-5 w-5 translate-x-px" />
             )}
           </button>
         )}

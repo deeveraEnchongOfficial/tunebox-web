@@ -40,7 +40,7 @@ export function NowPlaying({
   const progressPercent = duration ? (progress / duration) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-linear-to-b from-indigo-900/60 via-background to-background animate-in fade-in slide-in-from-bottom duration-300">
+    <div className="fixed inset-0 z-60 flex flex-col bg-linear-to-b from-indigo-900/60 via-background to-background animate-in fade-in slide-in-from-bottom duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-4">
         <button
