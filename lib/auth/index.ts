@@ -19,11 +19,20 @@ export const auth = betterAuth({
   },
   plugins: [nextCookies()],
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
-  trustedOrigins: [
-    'http://localhost:8080',
-    'http://localhost:3000',
-    'https://tunebox-web-chi.vercel.app',
-  ],
+  trustedOrigins: async (request) => {
+    const base = [
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'https://tunebox-web-chi.vercel.app',
+    ];
+    if (!request) return base;
+    const origin = request.headers.get('origin') ?? '';
+    // Trust any localhost origin (for Flutter web dev on any port)
+    if (origin.startsWith('http://localhost:')) {
+      return [...base, origin];
+    }
+    return base;
+  },
 });
 
 export type Session = typeof auth.$Infer.Session;
