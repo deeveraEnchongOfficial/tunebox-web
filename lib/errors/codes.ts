@@ -1,0 +1,16 @@
+// Centralized error codes. Kept in sync with the Flutter error mapper.
+export const ErrorCode = {
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  INVALID_REQUEST: 'INVALID_REQUEST',
+  INVALID_URL: 'INVALID_URL',
+  DUPLICATE_MUSIC: 'DUPLICATE_MUSIC',
+  DOWNLOAD_NOT_AVAILABLE: 'DOWNLOAD_NOT_AVAILABLE',
+  DOWNLOAD_FAILED: 'DOWNLOAD_FAILED',
+  STORAGE_ERROR: 'STORAGE_ERROR',
+  RATE_LIMITED: 'RATE_LIMITED',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+} as const;
+
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

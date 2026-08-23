@@ -1,0 +1,29 @@
+# Local development services for TuneBox Web.
+# MongoDB Atlas is used for the database (no local mongo container needed).
+# Run: docker compose up -d
+services:
+  # Optional object storage emulator (MinIO) for authorized downloads.
+  minio:
+    image: minio/minio:latest
+    container_name: tunebox-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - tunebox-minio-data:/data
+
+  # Optional Redis for caching / rate limiting.
+  redis:
+    image: redis:7-alpine
+    container_name: tunebox-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  tunebox-minio-data:
