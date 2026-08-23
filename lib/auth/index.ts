@@ -19,6 +19,11 @@ export const auth = betterAuth({
   },
   plugins: [nextCookies()],
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
+  trustedOrigins: [
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'https://tunebox-web-chi.vercel.app',
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session;
