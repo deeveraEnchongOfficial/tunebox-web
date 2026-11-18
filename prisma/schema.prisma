@@ -158,7 +158,8 @@ model PlaylistItem {
 }
 
 // ───────────────────────────────────────────────────────────
-// Authorized downloads (NOT for YouTube audio extraction)
+// Audio downloads — MP3 files stored on Google Drive
+// (storageKey = Drive file ID)
 // ───────────────────────────────────────────────────────────
 
 model Download {
@@ -166,12 +167,14 @@ model Download {
   userId          String
   musicId         String         @db.ObjectId
   sourceUrl       String
-  storageKey      String
+  storageKey      String?
   fileSize        Int?
   durationSeconds Int?
   mimeType        String?
   checksum        String?
   status          DownloadStatus
+  error           String?
+  startedAt       DateTime?
   createdAt       DateTime       @default(now())
   completedAt     DateTime?
 
