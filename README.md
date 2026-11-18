@@ -39,6 +39,15 @@
 - MongoDB Atlas connection string
 - YouTube Data API key (optional but recommended — get one from [Google Cloud Console](https://console.cloud.google.com/))
 
+### Google Drive setup (audio downloads)
+
+MP3 downloads are uploaded to a central Google Drive account. One-time setup:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), same project as your YouTube API key: **APIs & Services → Library → enable "Google Drive API"**.
+2. **APIs & Services → Credentials → Create Credentials → OAuth client ID → Desktop app**. Copy the client ID and secret into `.env`.
+3. Run `pnpm drive:auth`, open the printed URL, approve access, and paste the printed refresh token into `.env` (`GOOGLE_DRIVE_REFRESH_TOKEN`).
+4. Optional: set `GOOGLE_DRIVE_FOLDER_ID` to reuse a folder; otherwise a `TuneBox` folder is created automatically on first upload.
+
 ## Quick start
 
 ```bash
