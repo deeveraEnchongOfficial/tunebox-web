@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  serverExternalPackages: ['ffmpeg-static', 'googleapis'],
+  serverExternalPackages: ['ffmpeg-static', '@googleapis/drive'],
   outputFileTracingIncludes: {
     '/api/music/[id]/download': [
       './bin/yt-dlp',

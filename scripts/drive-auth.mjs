@@ -9,7 +9,7 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { google } from 'googleapis';
+import { auth } from '@googleapis/drive';
 
 // Load .env manually (dotenv isn't a dep).
 for (const line of readFileSync(path.resolve('.env'), 'utf8').split('\n')) {
@@ -24,7 +24,7 @@ if (!GOOGLE_DRIVE_CLIENT_ID || !GOOGLE_DRIVE_CLIENT_SECRET) {
 }
 
 const REDIRECT_URI = 'http://localhost:3333/oauth2callback';
-const oauth2 = new google.auth.OAuth2(
+const oauth2 = new auth.OAuth2(
   GOOGLE_DRIVE_CLIENT_ID,
   GOOGLE_DRIVE_CLIENT_SECRET,
   REDIRECT_URI,
