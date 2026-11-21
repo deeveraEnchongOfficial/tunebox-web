@@ -86,10 +86,17 @@ export const driveService = {
         headers: range ? { Range: range } : {},
       },
     );
+    // gaxios v6 returns fetch-style Headers; older versions return a
+    // plain record — normalize so callers can index by lowercase name.
+    const raw = res.headers as unknown;
+    const headers =
+      raw && typeof (raw as Headers).entries === 'function'
+        ? Object.fromEntries((raw as Headers).entries())
+        : ((raw ?? {}) as Record<string, string>);
     return {
       stream: res.data as unknown as Readable,
       status: res.status ?? 200,
-      headers: (res.headers ?? {}) as Record<string, string>,
+      headers,
     };
   },
 

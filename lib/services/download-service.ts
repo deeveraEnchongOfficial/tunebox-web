@@ -79,7 +79,7 @@ export const downloadService = {
   // unchanged.
   async process(downloadId: string): Promise<void> {
     const download = await prisma.download.findUnique({ where: { id: downloadId } });
-    if (!download || (download.status !== 'PENDING' && download.status !== 'PROCESSING')) {
+    if (!download || download.status !== 'PENDING') {
       return;
     }
     const music = await prisma.music.findUnique({ where: { id: download.musicId } });
@@ -91,10 +91,24 @@ export const downloadService = {
       return;
     }
 
-    await prisma.download.update({
-      where: { id: downloadId },
+    // Atomically claim the row — a concurrent invocation that gets here
+    // second sees count 0 and bails.
+    const claimed = await prisma.download.updateMany({
+      where: { id: downloadId, status: 'PENDING' },
       data: { status: 'PROCESSING', startedAt: new Date() },
     });
+    if (claimed.count === 0) return;
+
+    // Latest-wins: a concurrent request may have created a newer row for
+    // the same music. Only the newest job produces the Drive file.
+    const latest = await latestDownload(download.musicId);
+    if (!latest || latest.id !== downloadId) {
+      await prisma.download.update({
+        where: { id: downloadId },
+        data: { status: 'FAILED', error: 'Superseded by a newer download.' },
+      });
+      return;
+    }
 
     const workDir = await mkdtemp(
       path.join(optionalEnv('DOWNLOAD_TMP_DIR', tmpdir()), 'tunebox-'),

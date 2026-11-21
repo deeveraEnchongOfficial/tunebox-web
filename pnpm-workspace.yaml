@@ -6,4 +6,4 @@ allowBuilds:
   prisma: true
   sharp: true
   unrs-resolver: true
-  yt-dlp-exec: true
+

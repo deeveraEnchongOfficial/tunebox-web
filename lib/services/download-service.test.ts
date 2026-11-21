@@ -10,6 +10,7 @@ const prismaMock = vi.hoisted(() => ({
     findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
   },
 }));
 
@@ -203,8 +204,10 @@ describe('latest', () => {
 });
 
 describe('process', () => {
-  it('runs the happy path: PROCESSING → upload → READY, temp cleaned', async () => {
+  it('runs the happy path: claim → upload → READY, temp cleaned', async () => {
     prismaMock.download.findUnique.mockResolvedValue(mkDownload());
+    prismaMock.download.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.download.findFirst.mockResolvedValue(mkDownload({ id: 'dl-1' }));
     prismaMock.download.update.mockImplementation((_args: unknown) => Promise.resolve(mkDownload()));
     const mp3Path = path.join(tmpDir, 'vid1.mp3');
     writeFileSync(mp3Path, 'mp3data');
@@ -213,9 +216,9 @@ describe('process', () => {
 
     await downloadService.process('dl-1');
 
-    expect(prismaMock.download.update).toHaveBeenNthCalledWith(
-      1,
+    expect(prismaMock.download.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
+        where: { id: 'dl-1', status: 'PENDING' },
         data: expect.objectContaining({ status: 'PROCESSING', startedAt: expect.any(Date) }),
       }),
     );
@@ -242,6 +245,8 @@ describe('process', () => {
 
   it('marks FAILED with the error message when the downloader throws', async () => {
     prismaMock.download.findUnique.mockResolvedValue(mkDownload());
+    prismaMock.download.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.download.findFirst.mockResolvedValue(mkDownload({ id: 'dl-1' }));
     ytMock.downloadYouTubeAudio.mockRejectedValue(new Error('bot check'));
 
     await downloadService.process('dl-1');
@@ -269,6 +274,35 @@ describe('process', () => {
     await downloadService.process('dl-missing');
 
     expect(ytMock.downloadYouTubeAudio).not.toHaveBeenCalled();
+  });
+
+  it('bails when another invocation already claimed the row', async () => {
+    prismaMock.download.findUnique.mockResolvedValue(mkDownload());
+    prismaMock.download.updateMany.mockResolvedValue({ count: 0 }); // lost the claim race
+
+    await downloadService.process('dl-1');
+
+    expect(ytMock.downloadYouTubeAudio).not.toHaveBeenCalled();
+    expect(driveMock.uploadFile).not.toHaveBeenCalled();
+  });
+
+  it('marks itself FAILED when a newer download exists for the same music', async () => {
+    prismaMock.download.findUnique.mockResolvedValue(
+      mkDownload({ id: 'dl-1', createdAt: minutesAgo(1) }),
+    );
+    prismaMock.download.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.download.findFirst.mockResolvedValue(mkDownload({ id: 'dl-2' })); // newer row wins
+
+    await downloadService.process('dl-1');
+
+    expect(prismaMock.download.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: { id: 'dl-1' },
+        data: expect.objectContaining({ status: 'FAILED' }),
+      }),
+    );
+    expect(ytMock.downloadYouTubeAudio).not.toHaveBeenCalled();
+    expect(driveMock.uploadFile).not.toHaveBeenCalled();
   });
 });
 

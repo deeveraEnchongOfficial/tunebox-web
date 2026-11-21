@@ -140,7 +140,12 @@ describe('openReadStream', () => {
   it('requests media as a stream and forwards the range header', async () => {
     configureDriveEnv();
     const stream = Readable.from(['data']);
-    files.get.mockResolvedValue({ data: stream, status: 206, headers: { 'content-range': 'bytes 0-3/8' } });
+    // gaxios v6 returns fetch-style Headers, not a plain record
+    files.get.mockResolvedValue({
+      data: stream,
+      status: 206,
+      headers: new Headers({ 'content-range': 'bytes 0-3/8' }),
+    });
 
     const res = await driveService.openReadStream('file-1', 'bytes=0-3');
 

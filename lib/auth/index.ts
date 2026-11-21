@@ -18,12 +18,15 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24, // 1 day
   },
   plugins: [nextCookies()],
-  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
+  baseURL:
+    process.env.BETTER_AUTH_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
   trustedOrigins: async (request) => {
     const base = [
       'http://localhost:3000',
       'http://localhost:8080',
       'https://tunebox-web-chi.vercel.app',
+      ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
     ];
     if (!request) return base;
     const origin = request.headers.get('origin') ?? '';

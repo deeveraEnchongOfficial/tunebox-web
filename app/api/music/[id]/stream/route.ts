@@ -6,6 +6,7 @@ import { downloadService } from '@/lib/services/download-service';
 import { driveService } from '@/lib/services/drive-service';
 
 export const runtime = 'nodejs';
+export const maxDuration = 300;
 
 const PASSTHROUGH_HEADERS = ['content-length', 'content-range'] as const;
 
