@@ -98,7 +98,8 @@ export function GlobalPlayer() {
   }, []);
 
   React.useEffect(() => {
-    if (!current || current.sourceType !== 'YOUTUBE' || !ytApiReady || !window.YT) return;
+    if (!current || current.sourceType !== 'YOUTUBE' || current.streamUrl || !ytApiReady || !window.YT)
+      return;
     const videoId = extractYouTubeId(current.sourceUrl);
     if (!videoId) return;
 
@@ -186,7 +187,7 @@ export function GlobalPlayer() {
   }, [player.progress, seeking, ytPlayer]);
 
   React.useEffect(() => {
-    if (current?.sourceType !== 'YOUTUBE') return;
+    if (current?.sourceType !== 'YOUTUBE' || current?.streamUrl) return;
     const id = setInterval(() => {
       if (ytPlayer && !seeking) {
         try {
@@ -204,6 +205,17 @@ export function GlobalPlayer() {
   }, [current?.sourceType, ytPlayer, seeking, player]);
 
   React.useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (player.isPlaying) {
+      el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-fire when the track changes so a new element respects isPlaying
+  }, [player.isPlaying, current?.id]);
+
+  React.useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = player.muted ? 0 : player.volume;
     }
@@ -211,16 +223,17 @@ export function GlobalPlayer() {
 
   if (!current) return null;
 
+  const filePlayback = current.sourceType === 'AUTHORIZED_AUDIO' || !!current.streamUrl;
   const progressPercent = duration ? (progress / duration) * 100 : 0;
 
   function handleSeek(value: number) {
     if (!current) return;
     const target = (value / 100) * (duration || 0);
     player.seek(value / 100);
-    if (current.sourceType === 'YOUTUBE') {
+    if (filePlayback) {
+      if (audioRef.current) audioRef.current.currentTime = target;
+    } else {
       ytPlayer?.seekTo(target, true);
-    } else if (audioRef.current) {
-      audioRef.current.currentTime = target;
     }
     setProgress(target);
   }
@@ -252,7 +265,7 @@ export function GlobalPlayer() {
       )}
 
     <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 bg-black border-t border-white/5">
-      {current.sourceType === 'YOUTUBE' && (
+      {current.sourceType === 'YOUTUBE' && !current.streamUrl && (
         <div
           id={playerId}
           className="fixed bottom-24 md:bottom-20 right-3 z-50 w-44 h-24 sm:w-64 sm:h-36 rounded-lg overflow-hidden shadow-xl bg-black"
@@ -260,10 +273,10 @@ export function GlobalPlayer() {
       )}
 
       <div className="hidden">
-        {current.sourceType === 'AUTHORIZED_AUDIO' && (
+        {filePlayback && (
           <audio
             ref={audioRef}
-            src={current.sourceUrl}
+            src={current.streamUrl ?? current.sourceUrl}
             autoPlay={player.isPlaying}
             muted={player.muted}
             onTimeUpdate={handleAudioTimeUpdate}

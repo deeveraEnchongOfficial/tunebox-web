@@ -7,6 +7,7 @@ import { AddTracksDialog } from './add-tracks-dialog';
 import { PlaylistTrackList } from './playlist-track-list';
 import { PlaylistPlayButtonClient } from './playlist-play-button';
 import { prisma } from '@/lib/db';
+import { playbackFields } from '@/lib/services/music-service';
 import { TopBar } from '../../top-bar';
 
 export default async function PlaylistDetailPage({
@@ -33,6 +34,11 @@ export default async function PlaylistDetailPage({
               durationSeconds: true,
               sourceUrl: true,
               sourceType: true,
+              downloads: {
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+                select: { status: true, error: true },
+              },
             },
           },
         },
@@ -43,7 +49,10 @@ export default async function PlaylistDetailPage({
 
   if (!playlist || playlist.userId !== user.id) notFound();
 
-  const queue = playlist.items.map((i) => i.music).filter(Boolean) as QueueItem[];
+  const queue = playlist.items
+    .map((i) => i.music)
+    .filter(Boolean)
+    .map((m) => ({ ...m, streamUrl: playbackFields(m!).streamUrl })) as QueueItem[];
   const firstThumb = queue[0]?.thumbnailUrl ?? null;
 
   return (

@@ -5,8 +5,25 @@ import { Button } from '@/components/ui/button';
 import { MediaCard } from '@/components/media-card';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
+import { playbackFields } from '@/lib/services/music-service';
 import { TopBar } from './top-bar';
 import type { QueueItem } from '@/lib/player';
+
+const musicSelect = {
+  id: true,
+  title: true,
+  artist: true,
+  channelName: true,
+  thumbnailUrl: true,
+  durationSeconds: true,
+  sourceUrl: true,
+  sourceType: true,
+  downloads: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+    select: { status: true, error: true },
+  },
+};
 
 export default async function AppHomePage() {
   const user = await getSessionUser();
@@ -20,16 +37,7 @@ export default async function AppHomePage() {
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
       take: 12,
-      select: {
-        id: true,
-        title: true,
-        artist: true,
-        channelName: true,
-        thumbnailUrl: true,
-        durationSeconds: true,
-        sourceUrl: true,
-        sourceType: true,
-      },
+      select: musicSelect,
     }),
     prisma.playlist.findMany({
       where: { userId: user.id },
@@ -39,18 +47,7 @@ export default async function AppHomePage() {
         items: {
           take: 1,
           include: {
-            music: {
-              select: {
-                id: true,
-                title: true,
-                artist: true,
-                channelName: true,
-                thumbnailUrl: true,
-                durationSeconds: true,
-                sourceUrl: true,
-                sourceType: true,
-              },
-            },
+            music: { select: musicSelect },
           },
         },
       },
@@ -66,6 +63,7 @@ export default async function AppHomePage() {
     sourceUrl: m.sourceUrl,
     sourceType: m.sourceType,
     durationSeconds: m.durationSeconds,
+    streamUrl: playbackFields(m).streamUrl,
   }));
 
   const hour = new Date().getHours();
@@ -172,6 +170,7 @@ export default async function AppHomePage() {
                         sourceUrl: firstTrack.sourceUrl,
                         sourceType: firstTrack.sourceType,
                         durationSeconds: firstTrack.durationSeconds,
+                        streamUrl: playbackFields(firstTrack).streamUrl,
                       },
                     ]
                   : undefined;

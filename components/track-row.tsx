@@ -1,6 +1,6 @@
 'use client';
 
-import { Music, Play, Pause, Heart, Trash2, Loader2, ListMusic } from 'lucide-react';
+import { Music, Play, Pause, Heart, Trash2, Loader2, ListMusic, Download, Check, RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { usePlayer, type QueueItem } from '@/lib/player';
@@ -16,6 +16,9 @@ export interface TrackRowItem {
   durationSeconds: number | null;
   sourceUrl: string;
   sourceType: 'YOUTUBE' | 'AUTHORIZED_AUDIO';
+  streamUrl?: string | null;
+  downloadStatus?: string | null;
+  downloadError?: string | null;
 }
 
 interface TrackRowProps {
@@ -24,6 +27,7 @@ interface TrackRowProps {
   index?: number;
   favorite?: boolean;
   onToggleFavorite?: (id: string) => void;
+  onDownload?: (id: string) => void;
   onDelete?: (id: string) => void;
   busyId?: string | null;
   trailing?: React.ReactNode;
@@ -35,6 +39,7 @@ export function TrackRow({
   index,
   favorite,
   onToggleFavorite,
+  onDownload,
   onDelete,
   busyId,
   trailing,
@@ -123,6 +128,44 @@ export function TrackRow({
             {(track.durationSeconds % 60).toString().padStart(2, '0')}
           </span>
         )}
+        {onDownload && track.sourceType === 'YOUTUBE' && (
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              if (track.downloadStatus !== 'READY' && track.downloadStatus !== 'PENDING' && track.downloadStatus !== 'PROCESSING') {
+                onDownload(track.id);
+              }
+            }}
+            disabled={busy || track.downloadStatus === 'READY' || track.downloadStatus === 'PENDING' || track.downloadStatus === 'PROCESSING'}
+            className={cn(
+              'h-8 w-8',
+              track.downloadStatus === 'READY' || track.downloadStatus === 'PENDING' || track.downloadStatus === 'PROCESSING'
+                ? 'text-primary opacity-100'
+                : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground',
+              track.downloadStatus === 'FAILED' && 'text-destructive opacity-100',
+            )}
+            title={
+              track.downloadStatus === 'FAILED'
+                ? `Download failed${track.downloadError ? `: ${track.downloadError}` : ''} — click to retry`
+                : track.downloadStatus === 'READY'
+                  ? 'MP3 saved'
+                  : track.downloadStatus === 'PENDING' || track.downloadStatus === 'PROCESSING'
+                    ? 'Downloading…'
+                    : 'Download MP3'
+            }
+          >
+            {track.downloadStatus === 'READY' ? (
+              <Check className="h-4 w-4" />
+            ) : track.downloadStatus === 'PENDING' || track.downloadStatus === 'PROCESSING' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : track.downloadStatus === 'FAILED' ? (
+              <RotateCcw className="h-4 w-4" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+          </Button>
+        )}
         {onToggleFavorite && (
           <Button
             size="icon"
@@ -175,6 +218,7 @@ export function mapToQueue(item: TrackRowItem): QueueItem {
     sourceUrl: item.sourceUrl,
     sourceType: item.sourceType,
     durationSeconds: item.durationSeconds,
+    streamUrl: item.streamUrl ?? null,
   };
 }
 

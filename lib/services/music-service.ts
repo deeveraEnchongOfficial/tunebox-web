@@ -2,22 +2,37 @@ import { prisma } from '@/lib/db';
 import { AppError } from '@/lib/errors/AppError';
 import { ErrorCode } from '@/lib/errors/codes';
 import { parseYouTubeVideoId } from '@/lib/utils/youtube';
-import type { Download, Music } from '@prisma/client';
+import type { DownloadStatus, Music } from '@prisma/client';
 import { SourceType } from '@prisma/client';
 
 const latestDownloadInclude = {
-  downloads: { orderBy: { createdAt: 'desc' as const }, take: 1 },
+  downloads: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+    select: { status: true, error: true },
+  },
 };
 
-/** Attach derived playback fields and hide the downloads relation. */
-export function serializeMusic<T extends Music & { downloads?: Download[] }>(music: T) {
+/** Derived playback fields — usable by both serialized music payloads and
+ * pages that query prisma directly with a downloads select. */
+export function playbackFields(music: {
+  id: string;
+  downloads?: { status: DownloadStatus; error?: string | null }[];
+}) {
   const latest = music.downloads?.[0] ?? null;
-  const { downloads: _downloads, ...rest } = music;
   return {
-    ...rest,
     downloadStatus: latest?.status ?? null,
+    downloadError: latest?.error ?? null,
     streamUrl: latest?.status === 'READY' ? `/api/music/${music.id}/stream` : null,
   };
+}
+
+/** Attach derived playback fields and hide the downloads relation. */
+export function serializeMusic<
+  T extends Music & { downloads?: { status: DownloadStatus; error?: string | null }[] },
+>(music: T) {
+  const { downloads: _downloads, ...rest } = music;
+  return { ...rest, ...playbackFields(music) };
 }
 
 export const musicService = {
