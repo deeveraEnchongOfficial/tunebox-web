@@ -3,15 +3,20 @@ import { stat, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import ffmpegPath from 'ffmpeg-static';
-
 import { AppError } from '@/lib/errors/AppError';
 import { ErrorCode } from '@/lib/errors/codes';
 
+// Both binaries are staged into bin/ by scripts/fetch-ytdlp.mjs at
+// postinstall — real files so Vercel can trace/package them.
 const YT_DLP_BIN = path.join(
   process.cwd(),
   'bin',
   process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp',
+);
+const FFMPEG_BIN = path.join(
+  process.cwd(),
+  'bin',
+  process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg',
 );
 const STDERR_LIMIT = 300;
 
@@ -47,7 +52,7 @@ export async function downloadYouTubeAudio(
     '0',
     '--no-playlist',
     '--ffmpeg-location',
-    ffmpegPath as unknown as string,
+    FFMPEG_BIN,
     '-o',
     path.join(outDir, `${videoId}.%(ext)s`),
   ];

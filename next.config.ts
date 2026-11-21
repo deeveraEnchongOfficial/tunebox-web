@@ -2,12 +2,12 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  serverExternalPackages: ['ffmpeg-static', '@googleapis/drive'],
+  serverExternalPackages: ['@googleapis/drive'],
+  // bin/ holds real (non-symlinked) yt-dlp + ffmpeg binaries staged by
+  // scripts/fetch-ytdlp.mjs — tracing symlinked node_modules dirs makes
+  // Vercel reject the function package.
   outputFileTracingIncludes: {
-    '/api/music/[id]/download': [
-      './bin/yt-dlp',
-      './node_modules/ffmpeg-static/**',
-    ],
+    '/api/music/[id]/download': ['./bin/**'],
   },
   // Allow the mobile app to call the API during development.
   async headers() {
