@@ -11,6 +11,9 @@ export interface QueueItem {
   sourceUrl: string;
   sourceType: 'YOUTUBE' | 'AUTHORIZED_AUDIO';
   durationSeconds: number | null;
+  /** Local MP3 stream URL — set when a Drive download is READY; takes
+   *  precedence over the YouTube iframe for playback. */
+  streamUrl: string | null;
 }
 
 interface PlayerState {

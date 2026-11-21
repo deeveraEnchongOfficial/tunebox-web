@@ -34,3 +34,7 @@ prisma/*.db-journal
 
 # OS
 Thumbs.db
+
+# Downloaded binaries (fetched by scripts/fetch-ytdlp.mjs)
+bin/yt-dlp
+bin/yt-dlp.exe

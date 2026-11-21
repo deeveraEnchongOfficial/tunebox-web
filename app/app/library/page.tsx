@@ -2,8 +2,25 @@ import { Heart, Library } from 'lucide-react';
 
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
+import { playbackFields } from '@/lib/services/music-service';
 import { MusicList } from './music-list';
 import { TopBar } from '../top-bar';
+
+const musicSelect = {
+  id: true,
+  title: true,
+  artist: true,
+  channelName: true,
+  thumbnailUrl: true,
+  durationSeconds: true,
+  sourceUrl: true,
+  sourceType: true,
+  downloads: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+    select: { status: true, error: true },
+  },
+};
 
 export default async function LibraryPage() {
   const user = await getSessionUser();
@@ -13,32 +30,12 @@ export default async function LibraryPage() {
     prisma.music.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        artist: true,
-        channelName: true,
-        thumbnailUrl: true,
-        durationSeconds: true,
-        sourceUrl: true,
-        sourceType: true,
-      },
+      select: musicSelect,
     }),
     prisma.favorite.findMany({
       where: { userId: user.id },
       include: {
-        music: {
-          select: {
-            id: true,
-            title: true,
-            artist: true,
-            channelName: true,
-            thumbnailUrl: true,
-            durationSeconds: true,
-            sourceUrl: true,
-            sourceType: true,
-          },
-        },
+        music: { select: musicSelect },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -46,6 +43,7 @@ export default async function LibraryPage() {
 
   const favoriteIds = new Set(favorites.map((f) => f.musicId));
   const favoriteMusic = favorites.map((f) => f.music).filter((m) => m !== null);
+  const withPlayback = (m: (typeof music)[number]) => ({ ...m, ...playbackFields(m) });
 
   return (
     <div className="relative">
@@ -73,7 +71,7 @@ export default async function LibraryPage() {
             <p className="text-muted-foreground">Your library is empty. Add some music to get started.</p>
           </div>
         ) : (
-          <MusicList music={music} favoriteIds={favoriteIds} />
+          <MusicList music={music.map(withPlayback)} favoriteIds={favoriteIds} />
         )}
 
         {favoriteMusic.length > 0 && (
@@ -82,7 +80,7 @@ export default async function LibraryPage() {
               <Heart className="h-5 w-5 text-primary fill-primary" />
               <h2 className="text-xl md:text-2xl font-bold">Liked Songs</h2>
             </div>
-            <MusicList music={favoriteMusic} favoriteIds={favoriteIds} />
+            <MusicList music={favoriteMusic.map(withPlayback)} favoriteIds={favoriteIds} />
           </div>
         )}
       </div>

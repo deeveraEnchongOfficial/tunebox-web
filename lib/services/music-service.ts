@@ -2,7 +2,38 @@ import { prisma } from '@/lib/db';
 import { AppError } from '@/lib/errors/AppError';
 import { ErrorCode } from '@/lib/errors/codes';
 import { parseYouTubeVideoId } from '@/lib/utils/youtube';
+import type { DownloadStatus, Music } from '@prisma/client';
 import { SourceType } from '@prisma/client';
+
+const latestDownloadInclude = {
+  downloads: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 1,
+    select: { status: true, error: true },
+  },
+};
+
+/** Derived playback fields — usable by both serialized music payloads and
+ * pages that query prisma directly with a downloads select. */
+export function playbackFields(music: {
+  id: string;
+  downloads?: { status: DownloadStatus; error?: string | null }[];
+}) {
+  const latest = music.downloads?.[0] ?? null;
+  return {
+    downloadStatus: latest?.status ?? null,
+    downloadError: latest?.error ?? null,
+    streamUrl: latest?.status === 'READY' ? `/api/music/${music.id}/stream` : null,
+  };
+}
+
+/** Attach derived playback fields and hide the downloads relation. */
+export function serializeMusic<
+  T extends Music & { downloads?: { status: DownloadStatus; error?: string | null }[] },
+>(music: T) {
+  const { downloads: _downloads, ...rest } = music;
+  return { ...rest, ...playbackFields(music) };
+}
 
 export const musicService = {
   /** Resolve a YouTube URL into metadata (bookmark/reference only). */
@@ -84,7 +115,7 @@ export const musicService = {
       throw new AppError({ code: ErrorCode.DUPLICATE_MUSIC, message: 'Already in your library.' });
     }
 
-    return prisma.music.create({
+    const music = await prisma.music.create({
       data: {
         userId,
         sourceType: input.sourceType,
@@ -97,6 +128,7 @@ export const musicService = {
         durationSeconds: input.durationSeconds,
       },
     });
+    return serializeMusic({ ...music, downloads: [] });
   },
 
   async list(userId: string, opts: { cursor?: string; limit?: number } = {}) {
@@ -105,31 +137,48 @@ export const musicService = {
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: limit + 1,
+      include: latestDownloadInclude,
       ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
     });
     const hasMore = items.length > limit;
     return {
-      items: items.slice(0, limit),
+      items: items.slice(0, limit).map(serializeMusic),
       nextCursor: hasMore ? items[limit - 1]?.id ?? null : null,
       hasMore,
     };
   },
 
   async getById(id: string, userId: string) {
-    const music = await prisma.music.findUnique({ where: { id } });
+    const music = await prisma.music.findUnique({
+      where: { id },
+      include: latestDownloadInclude,
+    });
     if (!music || music.userId !== userId) {
       throw new AppError({ code: ErrorCode.NOT_FOUND, message: 'Music not found.' });
     }
-    return music;
+    return serializeMusic(music);
   },
 
   async update(id: string, userId: string, data: { title?: string; artist?: string | null }) {
     await this.getById(id, userId);
-    return prisma.music.update({ where: { id }, data });
+    const music = await prisma.music.update({
+      where: { id },
+      data,
+      include: latestDownloadInclude,
+    });
+    return serializeMusic(music);
   },
 
   async delete(id: string, userId: string) {
     await this.getById(id, userId);
+    const downloads = await prisma.download.findMany({
+      where: { musicId: id, storageKey: { not: null } },
+      select: { storageKey: true },
+    });
+    const { driveService } = await import('@/lib/services/drive-service');
+    for (const d of downloads) {
+      if (d.storageKey) await driveService.deleteFile(d.storageKey);
+    }
     await prisma.music.delete({ where: { id } });
   },
 };

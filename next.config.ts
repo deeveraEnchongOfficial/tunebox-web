@@ -2,6 +2,13 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ['ffmpeg-static', '@googleapis/drive'],
+  outputFileTracingIncludes: {
+    '/api/music/[id]/download': [
+      './bin/yt-dlp',
+      './node_modules/ffmpeg-static/**',
+    ],
+  },
   // Allow the mobile app to call the API during development.
   async headers() {
     return [
