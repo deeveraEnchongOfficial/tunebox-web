@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Download, Loader2, RotateCcw, X } from 'lucide-react';
+import { Check, Copy, Download, Loader2, RotateCcw, X } from 'lucide-react';
 
 interface ActiveDownload {
   id: string;
@@ -23,6 +23,17 @@ export function DownloadWidget() {
   const [items, setItems] = useState<ActiveDownload[]>([]);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  async function copyError(downloadId: string, error: string) {
+    try {
+      await navigator.clipboard.writeText(error);
+      setCopied(downloadId);
+      setTimeout(() => setCopied((c) => (c === downloadId ? null : c)), 1500);
+    } catch {
+      /* clipboard unavailable — the full text is also in the tooltip */
+    }
+  }
   const prevIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -76,7 +87,7 @@ export function DownloadWidget() {
   if (visible.length === 0) return null;
 
   return (
-    <div className="fixed bottom-40 md:bottom-44 right-3 sm:right-4 z-[60] w-72 rounded-lg bg-card border border-white/10 shadow-2xl overflow-hidden">
+    <div className="fixed bottom-40 md:bottom-44 right-3 sm:right-4 z-60 w-72 rounded-lg bg-card border border-white/10 shadow-2xl overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10">
         <Download className="h-4 w-4 text-primary" />
         <p className="text-xs font-bold uppercase tracking-wide">Downloads</p>
@@ -88,6 +99,19 @@ export function DownloadWidget() {
               <p className="flex-1 text-sm font-medium truncate">{d.title}</p>
               {d.status === 'FAILED' ? (
                 <>
+                  {d.error && (
+                    <button
+                      onClick={() => copyError(d.id, d.error)}
+                      className="text-muted-foreground hover:text-foreground"
+                      title="Copy error"
+                    >
+                      {copied === d.id ? (
+                        <Check className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
                   <button
                     onClick={() => retry(d.musicId, d.id)}
                     disabled={retrying === d.id}
@@ -115,7 +139,7 @@ export function DownloadWidget() {
               )}
             </div>
             {d.status === 'FAILED' ? (
-              <p className="mt-1 text-xs text-destructive truncate" title={d.error ?? undefined}>
+              <p className="mt-1 text-xs text-destructive line-clamp-2 wrap-break-word" title={d.error ?? undefined}>
                 {d.error ?? 'Download failed'}
               </p>
             ) : (
