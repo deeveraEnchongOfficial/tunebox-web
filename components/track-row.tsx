@@ -61,7 +61,7 @@ export function TrackRow({
 
   return (
     <div
-      onDoubleClick={play}
+      onClick={play}
       className={cn(
         'group grid grid-cols-[16px_1fr_auto] sm:grid-cols-[16px_4rem_1fr_auto] items-center gap-3 rounded-md px-2 sm:px-4 py-2 transition-colors',
         isCurrent ? 'bg-white/10' : 'hover:bg-white/5',
@@ -120,8 +120,8 @@ export function TrackRow({
         </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1 sm:gap-2 justify-end">
+      {/* Actions — stopPropagation keeps button taps from playing the row */}
+      <div className="flex items-center gap-1 sm:gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
         {track.durationSeconds && (
           <span className="text-xs text-muted-foreground tabular-nums hidden sm:block mr-2">
             {Math.floor(track.durationSeconds / 60)}:
@@ -142,7 +142,7 @@ export function TrackRow({
               'h-8 w-8',
               track.downloadStatus === 'READY' || track.downloadStatus === 'PENDING' || track.downloadStatus === 'PROCESSING'
                 ? 'text-primary opacity-100'
-                : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground',
+                : 'text-muted-foreground opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto hover:text-foreground',
               track.downloadStatus === 'FAILED' && 'text-destructive opacity-100',
             )}
             title={
@@ -176,7 +176,7 @@ export function TrackRow({
               'h-8 w-8',
               favorite
                 ? 'text-primary opacity-100'
-                : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground',
+                : 'text-muted-foreground opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto hover:text-foreground',
             )}
             title="Favorite"
           >
@@ -187,7 +187,7 @@ export function TrackRow({
             )}
           </Button>
         )}
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto transition-opacity">
           <AddToPlaylistDialog musicId={track.id} musicTitle={track.title} />
         </div>
         {onDelete && (
@@ -196,7 +196,7 @@ export function TrackRow({
             variant="ghost"
             onClick={() => onDelete(track.id)}
             disabled={busy}
-            className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
+            className="h-8 w-8 text-muted-foreground opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto hover:text-destructive"
             title="Remove"
           >
             <Trash2 className="h-4 w-4" />
