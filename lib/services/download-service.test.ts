@@ -255,7 +255,7 @@ describe('process', () => {
 
     await downloadService.process('dl-1');
 
-    expect(prismaMock.download.update).toHaveBeenLastCalledWith(
+    expect(prismaMock.download.updateMany).toHaveBeenLastCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: 'FAILED', error: expect.stringContaining('bot check') }),
       }),

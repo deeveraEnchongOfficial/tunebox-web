@@ -80,13 +80,32 @@ export async function downloadYouTubeAudio(
     args.push('--cookies', cookiesPath);
   }
 
-  args.push(`https://www.youtube.com/watch?v=${videoId}`);
+  const url = `https://www.youtube.com/watch?v=${videoId}`;
+  const onStderr = (chunk: string) => {
+    const m = PERCENT_RE.exec(chunk);
+    if (m?.[1]) onProgress?.(Math.min(100, Math.round(parseFloat(m[1]))));
+  };
+
+  // Datacenter IPs hit YouTube's "sign in to confirm you're not a bot"
+  // wall on the default player clients. Retrying with alternate clients
+  // (embedded/mobile) sometimes slips through; YOUTUBE_COOKIES is the
+  // durable fix when it doesn't.
+  const BOT_WALL_RE = /sign in to confirm|not a bot/i;
+  // Clients that occasionally bypass the bot wall from datacenter IPs.
+  const ALT_CLIENTS = 'youtube:player_client=web_embedded,mweb';
 
   try {
-    await run(YT_DLP_BIN, args, (chunk) => {
-      const m = PERCENT_RE.exec(chunk);
-      if (m?.[1]) onProgress?.(Math.min(100, Math.round(parseFloat(m[1]))));
-    });
+    try {
+      await run(YT_DLP_BIN, [...args, url], onStderr);
+    } catch (err) {
+      const stderr = (err as { stderr?: string }).stderr ?? '';
+      if (!BOT_WALL_RE.test(stderr)) throw err;
+      await run(
+        YT_DLP_BIN,
+        [...args, '--extractor-args', ALT_CLIENTS, url],
+        onStderr,
+      );
+    }
   } catch (err) {
     const stderr = (err as { stderr?: string }).stderr;
     const detail = stderr || (err as Error).message || 'yt-dlp failed';
