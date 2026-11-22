@@ -12,9 +12,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const user = await requireAuth();
     const { id } = await params;
     const { download, isNew } = await downloadService.request(user.id, id);
-    if (isNew) {
+    if (isNew && process.env.DOWNLOAD_RUNNER !== 'external') {
       // Same split as POST /api/music — after() is prod-only; dev runs
-      // the job directly on the persistent Node process.
+      // the job directly on the persistent Node process. With
+      // DOWNLOAD_RUNNER=external a local worker claims the row instead.
       if (process.env.NODE_ENV === 'production') {
         after(() => downloadService.process(download.id));
       } else {

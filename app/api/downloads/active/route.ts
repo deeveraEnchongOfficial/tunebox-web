@@ -10,14 +10,17 @@ export async function GET() {
   try {
     const user = await requireAuth();
     const downloads = await prisma.download.findMany({
-      where: { userId: user.id, status: { in: ['PENDING', 'PROCESSING', 'FAILED'] } },
+      where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
       include: { music: { select: { title: true } } },
     });
-    // Keep only the newest row per music — retries create new rows.
+    // Dedup by newest row per music across ALL statuses first — a track
+    // whose latest attempt was dismissed (DELETED) or finished (READY)
+    // must not resurface its older failed rows.
     const seen = new Set<string>();
     const items = downloads
       .filter((d) => (seen.has(d.musicId) ? false : (seen.add(d.musicId), true)))
+      .filter((d) => ['PENDING', 'PROCESSING', 'FAILED'].includes(d.status))
       .map((d) => ({
         id: d.id,
         musicId: d.musicId,

@@ -75,6 +75,7 @@ App at `http://localhost:3000` (dev) or `https://tunebox-web-chi.vercel.app` (pr
 | `GOOGLE_DRIVE_FOLDER_ID` | Optional — Drive folder to reuse; auto-creates `TuneBox` if unset |
 | `DOWNLOAD_TMP_DIR` | Optional — temp dir for in-flight MP3s (defaults to OS tmp) |
 | `YOUTUBE_COOKIES` | Optional — base64 `cookies.txt` to bypass YouTube bot-checks on datacenter IPs |
+| `DOWNLOAD_RUNNER` | Optional — `external`: app only enqueues; a worker on a trusted IP (see below) processes downloads |
 
 ## Scripts
 
@@ -90,6 +91,7 @@ App at `http://localhost:3000` (dev) or `https://tunebox-web-chi.vercel.app` (pr
 | `prisma:db push` | Sync schema to MongoDB |
 | `prisma:studio` | Prisma Studio UI |
 | `drive:auth` | One-time Google Drive OAuth flow → prints refresh token |
+| `worker` | Local download worker — processes the queue from a trusted (residential) IP |
 
 ## Deploy to Vercel
 
@@ -100,7 +102,10 @@ App at `http://localhost:3000` (dev) or `https://tunebox-web-chi.vercel.app` (pr
 ### Audio pipeline notes
 
 - Saving a YouTube track auto-triggers `POST /api/music/[id]/download`; the job runs inside the function via `after()` (`maxDuration = 300s`). `yt-dlp` + `ffmpeg` binaries ship inside the bundle via `outputFileTracingIncludes`.
-- Downloads run on datacenter IPs — YouTube **will** bot-check some of them. Failed jobs surface as `FAILED` + retry button in the library. Workaround: export `cookies.txt` for youtube.com from your browser, base64 it, set `YOUTUBE_COOKIES`, redeploy.
+- Downloads run on datacenter IPs — YouTube **will** bot-check them (`Sign in to confirm you're not a bot`). Two workarounds:
+  - **Local worker (recommended for personal use):** set `DOWNLOAD_RUNNER=external` on Vercel so the app only enqueues; run `pnpm worker` on a machine with a residential IP — it polls the shared MongoDB queue, downloads locally, uploads to Drive, marks `READY`. To keep it running across reboots: `cp scripts/com.tunebox.download-worker.plist ~/Library/LaunchAgents/ && launchctl load ~/Library/LaunchAgents/com.tunebox.download-worker.plist`
+  - **Cookies:** export `cookies.txt` for youtube.com (devtools → Network → request `cookie:` header, or `node ../e2e-tests/cookie-grab.mjs`), base64 it, set `YOUTUBE_COOKIES`, redeploy.
+- Failed jobs surface in the floating download widget with retry/copy/dismiss buttons.
 - Playback goes through `GET /api/music/[id]/stream`, which proxies Drive with `Range` support so seeking works. Stream bandwidth counts against Vercel's transfer quota (~100 GB/mo Hobby).
 
 ## API routes

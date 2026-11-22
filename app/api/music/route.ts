@@ -28,10 +28,12 @@ export async function POST(request: Request) {
     // leaving orphaned tracks with no download row.
     if (music.sourceType === 'YOUTUBE') {
       const { download, isNew } = await downloadService.request(user.id, music.id);
-      if (isNew) {
+      if (isNew && process.env.DOWNLOAD_RUNNER !== 'external') {
         // Prod: after() survives the function's response lifecycle on
         // Vercel. Dev: after() is dropped when the browser navigates, so
         // fire-and-forget on the persistent Node process instead.
+        // DOWNLOAD_RUNNER=external: only enqueue — a local worker on a
+        // trusted IP claims the row (datacenter IPs get YouTube's bot wall).
         if (process.env.NODE_ENV === 'production') {
           after(() => downloadService.process(download.id));
         } else {
