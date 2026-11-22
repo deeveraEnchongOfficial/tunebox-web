@@ -132,7 +132,9 @@ describe('uploadFile', () => {
     expect(call.media.mimeType).toBe('audio/mpeg');
     expect(call.media.body).toBeInstanceOf(Readable);
     // Drain the lazy read stream so its fs.open completes before tmp cleanup.
-    for await (const _chunk of call.media.body as Readable) { /* consume */ }
+    let bytes = 0;
+    for await (const chunk of call.media.body as Readable) bytes += (chunk as Buffer).length;
+    expect(bytes).toBeGreaterThan(0);
   });
 });
 

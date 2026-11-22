@@ -14,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +23,11 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error: signInError } = await authClient.signIn.email({ email, password });
+    const { error: signInError } = await authClient.signIn.email({
+      email,
+      password,
+      rememberMe: remember,
+    });
     if (signInError) {
       setError(signInError.message ?? 'Login failed');
       setLoading(false);
@@ -70,6 +75,19 @@ export default function LoginPage() {
               className="bg-input border-white/10"
             />
           </div>
+          <label htmlFor="remember" className="flex items-center gap-2 cursor-pointer w-fit">
+            <input
+              id="remember"
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              disabled={loading}
+              className="h-4 w-4 rounded border-white/20 bg-input accent-primary cursor-pointer"
+            />
+            <span className="text-sm text-muted-foreground select-none">
+              Remember this device
+            </span>
+          </label>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" size="lg" disabled={loading} className="w-full">
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}

@@ -202,7 +202,7 @@ export function GlobalPlayer() {
       }
     }, 500);
     return () => clearInterval(id);
-  }, [current?.sourceType, ytPlayer, seeking, player]);
+  }, [current?.sourceType, current?.streamUrl, ytPlayer, seeking, player]);
 
   React.useEffect(() => {
     const el = audioRef.current;

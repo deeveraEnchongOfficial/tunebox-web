@@ -78,7 +78,8 @@
   input[type='range']::-webkit-slider-runnable-track {
     height: 4px;
     border-radius: 2px;
-    background: var(--muted);
+    /* transparent so the inline progress gradient on the input shows */
+    background: transparent;
   }
   input[type='range']::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -88,16 +89,15 @@
     border-radius: 9999px;
     background: var(--foreground);
     margin-top: -4px;
-    opacity: 0;
-    transition: opacity 0.15s;
+    transition: transform 0.15s;
   }
   input[type='range']:hover::-webkit-slider-thumb {
-    opacity: 1;
+    transform: scale(1.2);
   }
   input[type='range']::-moz-range-track {
     height: 4px;
     border-radius: 2px;
-    background: var(--muted);
+    background: transparent;
   }
   input[type='range']::-moz-range-thumb {
     height: 12px;
@@ -105,11 +105,10 @@
     border: none;
     border-radius: 9999px;
     background: var(--foreground);
-    opacity: 0;
-    transition: opacity 0.15s;
+    transition: transform 0.15s;
   }
   input[type='range']:hover::-moz-range-thumb {
-    opacity: 1;
+    transform: scale(1.2);
   }
 }
 

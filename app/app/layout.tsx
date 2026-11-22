@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
 import { GlobalPlayer } from '@/components/player';
+import { DownloadWidget } from '@/components/download-widget';
 import { PlayerErrorBoundary } from '@/components/player-error-boundary';
 import { AppSidebar } from './app-sidebar';
 import { BottomTabBar } from './bottom-tab-bar';
@@ -22,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <PlayerErrorBoundary>
         <GlobalPlayer />
       </PlayerErrorBoundary>
+      <DownloadWidget />
       <BottomTabBar />
     </div>
   );

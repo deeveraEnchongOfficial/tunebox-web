@@ -17,6 +17,15 @@ interface DownloadPatch {
 
 const POLL_MS = 3000;
 const POLL_LIMIT = 120; // ~6 minutes
+const LATE_WATCH_CYCLES = 8; // ~24s — window for a late auto-enqueue
+
+// Rows with an in-flight/failed download are hidden from the list — the
+// floating Downloads widget owns them. `null` (never enqueued) and READY
+// stay visible; mirrors the server-side predicate.
+function rowVisible(m: TrackRowItem, patches: Record<string, DownloadPatch>) {
+  const status = patches[m.id]?.downloadStatus ?? m.downloadStatus;
+  return m.sourceType !== 'YOUTUBE' || status === 'READY' || status == null;
+}
 
 export function MusicList({ music, favoriteIds }: MusicListProps) {
   const router = useRouter();
@@ -30,40 +39,62 @@ export function MusicList({ music, favoriteIds }: MusicListProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Poll rows with in-flight downloads (auto-enqueued from /app/add or
-  // retried) — patch status in place; hard-reload on a terminal state so
-  // the server-rendered props pick up streamUrl.
+  // Poll /api/downloads/active while any row is in-flight OR might still
+  // be auto-enqueued (a `null`-status YouTube row whose keepalive POST
+  // from /app/add lands after this render). In-flight/failed rows vanish
+  // via rowVisible; reload on READY so fresh props carry streamUrl.
+  const [lateCycles, setLateCycles] = useState(0);
   useEffect(() => {
     const effective = (m: TrackRowItem) => patches[m.id]?.downloadStatus ?? m.downloadStatus;
-    const pending = music.filter(
+    const inFlight = music.filter(
       (m) => effective(m) === 'PENDING' || effective(m) === 'PROCESSING',
     );
-    if (pending.length === 0) return;
+    const maybeEnqueued = music.filter(
+      (m) => m.sourceType === 'YOUTUBE' && effective(m) == null,
+    );
+    if (inFlight.length === 0 && (maybeEnqueued.length === 0 || lateCycles >= LATE_WATCH_CYCLES))
+      return;
     let cancelled = false;
     const timer = setTimeout(async () => {
-      let hitTerminal = false;
+      let hitReady = false;
       const next: Record<string, DownloadPatch> = {};
-      for (const m of pending) {
-        try {
-          const res = await fetch(`/api/music/${m.id}/download`);
-          const dl = (await res.json())?.data;
+      try {
+        const res = await fetch('/api/downloads/active');
+        const active: { musicId: string; status: string; error: string | null }[] =
+          (await res.json())?.data ?? [];
+        const byMusic = new Map(active.map((d) => [d.musicId, d]));
+        for (const m of [...inFlight, ...maybeEnqueued]) {
+          const d = byMusic.get(m.id);
+          if (d?.status) {
+            next[m.id] = { downloadStatus: d.status, downloadError: d.error };
+            continue;
+          }
+          // Not in the active feed — either it reached a terminal state
+          // (READY isn't listed there) or a fast download skipped the
+          // PENDING window entirely. Fetch its real status.
+          const dlRes = await fetch(`/api/music/${m.id}/download`);
+          const dl = (await dlRes.json())?.data;
           if (dl?.status) {
             next[m.id] = { downloadStatus: dl.status, downloadError: dl.error ?? null };
-            if (dl.status === 'READY' || dl.status === 'FAILED') hitTerminal = true;
+            if (dl.status === 'READY') hitReady = true;
           }
-        } catch {
-          // transient — keep polling
         }
+      } catch {
+        // transient — keep polling
       }
       if (cancelled) return;
+      if (inFlight.length === 0 && maybeEnqueued.length > 0)
+        setLateCycles((c) => c + 1);
       setPatches((p) => ({ ...p, ...next }));
-      if (hitTerminal) window.location.reload();
+      // Soft refetch — the patch already reveals the row; refreshed props
+      // carry its streamUrl for playback.
+      if (hitReady) router.refresh();
     }, POLL_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [music, patches]);
+  }, [music, patches, lateCycles, router]);
 
   async function toggleFavorite(musicId: string) {
     setBusy(musicId);
@@ -110,13 +141,15 @@ export function MusicList({ music, favoriteIds }: MusicListProps) {
     }
   }
 
+  const visible = music.filter((m) => rowVisible(m, patches));
+
   return (
     <div className="flex flex-col gap-0.5">
-      {music.map((item, index) => (
+      {visible.map((item, index) => (
         <TrackRow
           key={item.id}
           track={{ ...item, ...patches[item.id] }}
-          queue={music.map((m) => ({ ...m, ...patches[m.id] }))}
+          queue={visible.map((m) => ({ ...m, ...patches[m.id] }))}
           index={index}
           favorite={favoriteIds.has(item.id)}
           onToggleFavorite={toggleFavorite}

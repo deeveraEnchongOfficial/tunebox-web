@@ -2,7 +2,7 @@ import { Heart, Library } from 'lucide-react';
 
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
-import { playbackFields } from '@/lib/services/music-service';
+import { playbackFields, visibleInLibrary } from '@/lib/services/music-service';
 import { MusicList } from './music-list';
 import { TopBar } from '../top-bar';
 
@@ -44,6 +44,8 @@ export default async function LibraryPage() {
   const favoriteIds = new Set(favorites.map((f) => f.musicId));
   const favoriteMusic = favorites.map((f) => f.music).filter((m) => m !== null);
   const withPlayback = (m: (typeof music)[number]) => ({ ...m, ...playbackFields(m) });
+  const visibleMusic = music.map(withPlayback).filter(visibleInLibrary);
+  const visibleFavorites = favoriteMusic.map(withPlayback).filter(visibleInLibrary);
 
   return (
     <div className="relative">
@@ -60,27 +62,27 @@ export default async function LibraryPage() {
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Playlist</p>
             <h1 className="text-2xl md:text-5xl font-extrabold tracking-tight truncate">Your Library</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              {music.length} {music.length === 1 ? 'song' : 'songs'} in your collection
+              {visibleMusic.length} {visibleMusic.length === 1 ? 'song' : 'songs'} in your collection
             </p>
           </div>
         </div>
 
-        {music.length === 0 ? (
+        {visibleMusic.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Library className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">Your library is empty. Add some music to get started.</p>
           </div>
         ) : (
-          <MusicList music={music.map(withPlayback)} favoriteIds={favoriteIds} />
+          <MusicList music={visibleMusic} favoriteIds={favoriteIds} />
         )}
 
-        {favoriteMusic.length > 0 && (
+        {visibleFavorites.length > 0 && (
           <div className="mt-12">
             <div className="flex items-center gap-2 mb-4">
               <Heart className="h-5 w-5 text-primary fill-primary" />
               <h2 className="text-xl md:text-2xl font-bold">Liked Songs</h2>
             </div>
-            <MusicList music={favoriteMusic.map(withPlayback)} favoriteIds={favoriteIds} />
+            <MusicList music={visibleFavorites} favoriteIds={favoriteIds} />
           </div>
         )}
       </div>

@@ -208,7 +208,7 @@ describe('process', () => {
     prismaMock.download.findUnique.mockResolvedValue(mkDownload());
     prismaMock.download.updateMany.mockResolvedValue({ count: 1 });
     prismaMock.download.findFirst.mockResolvedValue(mkDownload({ id: 'dl-1' }));
-    prismaMock.download.update.mockImplementation((_args: unknown) => Promise.resolve(mkDownload()));
+    prismaMock.download.update.mockImplementation(() => Promise.resolve(mkDownload()));
     const mp3Path = path.join(tmpDir, 'vid1.mp3');
     writeFileSync(mp3Path, 'mp3data');
     ytMock.downloadYouTubeAudio.mockResolvedValue({ filePath: mp3Path, fileSize: 7 });
@@ -222,7 +222,11 @@ describe('process', () => {
         data: expect.objectContaining({ status: 'PROCESSING', startedAt: expect.any(Date) }),
       }),
     );
-    expect(ytMock.downloadYouTubeAudio).toHaveBeenCalledWith('vid1', expect.any(String));
+    expect(ytMock.downloadYouTubeAudio).toHaveBeenCalledWith(
+      'vid1',
+      expect.any(String),
+      expect.any(Function),
+    );
     expect(driveMock.uploadFile).toHaveBeenCalledWith(
       expect.objectContaining({
         filePath: mp3Path,

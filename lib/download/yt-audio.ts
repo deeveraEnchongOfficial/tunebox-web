@@ -25,21 +25,35 @@ interface ExecResult {
   stderr: string;
 }
 
-function run(cmd: string, args: string[]): Promise<ExecResult> {
+function run(
+  cmd: string,
+  args: string[],
+  onStderr?: (chunk: string) => void,
+): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    execFile(cmd, args, { maxBuffer: 8 * 1024 * 1024 }, (err, stdout, stderr) => {
-      if (err) {
-        reject(Object.assign(err, { stderr: String(stderr ?? '') }));
-      } else {
-        resolve({ stdout: String(stdout), stderr: String(stderr ?? '') });
-      }
-    });
+    const child = execFile(
+      cmd,
+      args,
+      { maxBuffer: 8 * 1024 * 1024 },
+      (err, stdout, stderr) => {
+        if (err) {
+          reject(Object.assign(err, { stderr: String(stderr ?? '') }));
+        } else {
+          resolve({ stdout: String(stdout), stderr: String(stderr ?? '') });
+        }
+      },
+    );
+    if (onStderr) child.stderr?.on('data', (chunk) => onStderr(String(chunk)));
   });
 }
+
+// yt-dlp writes "[download]  42.6% of …" to stderr (carriage-return updates).
+const PERCENT_RE = /\[download\]\s+(\d+(?:\.\d+)?)%/;
 
 export async function downloadYouTubeAudio(
   videoId: string,
   outDir: string,
+  onProgress?: (percent: number) => void,
 ): Promise<{ filePath: string; fileSize: number }> {
   const outPath = path.join(outDir, `${videoId}.mp3`);
   let cookiesPath: string | null = null;
@@ -67,7 +81,10 @@ export async function downloadYouTubeAudio(
   args.push(`https://www.youtube.com/watch?v=${videoId}`);
 
   try {
-    await run(YT_DLP_BIN, args);
+    await run(YT_DLP_BIN, args, (chunk) => {
+      const m = PERCENT_RE.exec(chunk);
+      if (m?.[1]) onProgress?.(Math.min(100, Math.round(parseFloat(m[1]))));
+    });
   } catch (err) {
     const stderr = (err as { stderr?: string }).stderr;
     const detail = stderr || (err as Error).message || 'yt-dlp failed';

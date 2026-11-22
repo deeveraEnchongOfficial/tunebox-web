@@ -76,15 +76,6 @@ export default function AddMusicPage() {
         setError(data.error?.message ?? 'Failed to save');
         return;
       }
-      // Kick off the MP3 download in the background — no need to block the
-      // redirect; the library row shows progress. keepalive survives the
-      // router.push below, which would otherwise abort the in-flight fetch.
-      if (data.data?.id && resolved.sourceType === 'YOUTUBE') {
-        fetch(`/api/music/${data.data.id}/download`, {
-          method: 'POST',
-          keepalive: true,
-        }).catch(() => {});
-      }
       setSuccess(true);
       setTimeout(() => router.push('/app/library'), 1000);
     } catch {

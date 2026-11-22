@@ -27,11 +27,23 @@ export function playbackFields(music: {
   };
 }
 
+// A saved track is hidden while a download is in flight or failed —
+// the floating widget owns those states. `null` (never enqueued) stays
+// visible so the row's Download button remains the recovery path.
+export function visibleInLibrary(m: { sourceType: string; downloadStatus?: string | null }) {
+  return (
+    m.sourceType !== 'YOUTUBE' ||
+    m.downloadStatus === 'READY' ||
+    m.downloadStatus == null
+  );
+}
+
 /** Attach derived playback fields and hide the downloads relation. */
 export function serializeMusic<
   T extends Music & { downloads?: { status: DownloadStatus; error?: string | null }[] },
 >(music: T) {
-  const { downloads: _downloads, ...rest } = music;
+  const rest = { ...music };
+  delete rest.downloads;
   return { ...rest, ...playbackFields(music) };
 }
 
@@ -142,7 +154,10 @@ export const musicService = {
     });
     const hasMore = items.length > limit;
     return {
-      items: items.slice(0, limit).map(serializeMusic),
+      items: items
+        .slice(0, limit)
+        .map(serializeMusic)
+        .filter(visibleInLibrary),
       nextCursor: hasMore ? items[limit - 1]?.id ?? null : null,
       hasMore,
     };

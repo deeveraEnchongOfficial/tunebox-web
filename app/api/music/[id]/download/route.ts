@@ -13,7 +13,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const { download, isNew } = await downloadService.request(user.id, id);
     if (isNew) {
-      after(() => downloadService.process(download.id));
+      // Same split as POST /api/music — after() is prod-only; dev runs
+      // the job directly on the persistent Node process.
+      if (process.env.NODE_ENV === 'production') {
+        after(() => downloadService.process(download.id));
+      } else {
+        void downloadService.process(download.id);
+      }
     }
     return ok(download, { status: isNew ? 201 : 200 });
   } catch (error) {

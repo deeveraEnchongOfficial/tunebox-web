@@ -65,6 +65,7 @@ export const downloadService = {
         musicId,
         sourceUrl: music.sourceUrl,
         status: 'PENDING',
+        progress: 0,
       },
     });
     return { download, isNew: true };
@@ -113,9 +114,22 @@ export const downloadService = {
     const workDir = await mkdtemp(
       path.join(optionalEnv('DOWNLOAD_TMP_DIR', tmpdir()), 'tunebox-'),
     );
+    // Progress writes are throttled — yt-dlp emits several % lines/sec.
+    let lastProgressWrite = 0;
+    const writeProgress = (percent: number) => {
+      const now = Date.now();
+      if (now - lastProgressWrite < 1000 && percent < 100) return;
+      lastProgressWrite = now;
+      // yt-dlp % covers 0–95; the Drive upload closes the gap.
+      const scaled = Math.min(95, Math.round(percent * 0.95));
+      prisma.download
+        .update({ where: { id: downloadId }, data: { progress: scaled } })
+        .catch(() => {});
+    };
     try {
       driveService.ensureConfigured();
-      const { filePath } = await downloadYouTubeAudio(music.sourceId, workDir);
+      const { filePath } = await downloadYouTubeAudio(music.sourceId, workDir, writeProgress);
+      await prisma.download.update({ where: { id: downloadId }, data: { progress: 97 } });
       const { fileId, fileSize } = await driveService.uploadFile({
         filePath,
         name: `${music.title} [${music.sourceId}].mp3`,
@@ -125,6 +139,7 @@ export const downloadService = {
         where: { id: downloadId },
         data: {
           status: 'READY',
+          progress: 100,
           storageKey: fileId,
           fileSize,
           mimeType: 'audio/mpeg',
@@ -134,7 +149,9 @@ export const downloadService = {
       });
     } catch (err) {
       const message = (err instanceof Error ? err.message : String(err)).slice(0, 300);
-      await prisma.download.update({
+      // updateMany — a deleted parent music cascades the row away; a
+      // missing row is a no-op instead of an unhandled rejection.
+      await prisma.download.updateMany({
         where: { id: downloadId },
         data: { status: 'FAILED', error: message },
       });

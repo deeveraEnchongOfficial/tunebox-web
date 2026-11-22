@@ -7,7 +7,7 @@ import { AddTracksDialog } from './add-tracks-dialog';
 import { PlaylistTrackList } from './playlist-track-list';
 import { PlaylistPlayButtonClient } from './playlist-play-button';
 import { prisma } from '@/lib/db';
-import { playbackFields } from '@/lib/services/music-service';
+import { playbackFields, visibleInLibrary } from '@/lib/services/music-service';
 import { TopBar } from '../../top-bar';
 
 export default async function PlaylistDetailPage({
@@ -52,7 +52,8 @@ export default async function PlaylistDetailPage({
   const queue = playlist.items
     .map((i) => i.music)
     .filter(Boolean)
-    .map((m) => ({ ...m, streamUrl: playbackFields(m!).streamUrl })) as QueueItem[];
+    .map((m) => ({ ...m, ...playbackFields(m!) }))
+    .filter(visibleInLibrary) as QueueItem[];
   const firstThumb = queue[0]?.thumbnailUrl ?? null;
 
   return (

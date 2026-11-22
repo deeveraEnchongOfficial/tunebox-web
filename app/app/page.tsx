@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MediaCard } from '@/components/media-card';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
-import { playbackFields } from '@/lib/services/music-service';
+import { playbackFields, visibleInLibrary } from '@/lib/services/music-service';
 import { TopBar } from './top-bar';
 import type { QueueItem } from '@/lib/player';
 
@@ -54,17 +54,20 @@ export default async function AppHomePage() {
     }),
   ]);
 
-  const recentQueue: QueueItem[] = recentMusic.map((m) => ({
-    id: m.id,
-    title: m.title,
-    artist: m.artist,
-    channelName: m.channelName,
-    thumbnailUrl: m.thumbnailUrl,
-    sourceUrl: m.sourceUrl,
-    sourceType: m.sourceType,
-    durationSeconds: m.durationSeconds,
-    streamUrl: playbackFields(m).streamUrl,
-  }));
+  const recentQueue: QueueItem[] = recentMusic
+    .map((m) => ({
+      id: m.id,
+      title: m.title,
+      artist: m.artist,
+      channelName: m.channelName,
+      thumbnailUrl: m.thumbnailUrl,
+      sourceUrl: m.sourceUrl,
+      sourceType: m.sourceType,
+      durationSeconds: m.durationSeconds,
+      streamUrl: playbackFields(m).streamUrl,
+      downloadStatus: playbackFields(m).downloadStatus,
+    }))
+    .filter(visibleInLibrary);
 
   const hour = new Date().getHours();
   const greeting =
