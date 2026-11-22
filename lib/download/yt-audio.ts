@@ -65,6 +65,8 @@ export async function downloadYouTubeAudio(
     '--audio-quality',
     '0',
     '--no-playlist',
+    '--js-runtimes',
+    `node:${process.execPath}`,
     '--ffmpeg-location',
     FFMPEG_BIN,
     '-o',
