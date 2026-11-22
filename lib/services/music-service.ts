@@ -34,6 +34,9 @@ export function visibleInLibrary(m: { sourceType: string; downloadStatus?: strin
   return (
     m.sourceType !== 'YOUTUBE' ||
     m.downloadStatus === 'READY' ||
+    // DELETED = user dismissed the failed download — the row stays
+    // reachable with its Download button as the retry path.
+    m.downloadStatus === 'DELETED' ||
     m.downloadStatus == null
   );
 }

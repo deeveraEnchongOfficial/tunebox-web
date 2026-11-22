@@ -37,3 +37,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return handleError(error);
   }
 }
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await requireAuth();
+    const { id } = await params;
+    const download = await downloadService.dismiss(user.id, id);
+    return ok(download);
+  } catch (error) {
+    return handleError(error);
+  }
+}

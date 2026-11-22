@@ -34,6 +34,11 @@ export function DownloadWidget() {
       /* clipboard unavailable — the full text is also in the tooltip */
     }
   }
+
+  async function dismiss(downloadId: string, musicId: string) {
+    setDismissed((s) => new Set(s).add(downloadId));
+    await fetch(`/api/music/${musicId}/download`, { method: 'DELETE' }).catch(() => {});
+  }
   const prevIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -125,7 +130,7 @@ export function DownloadWidget() {
                     )}
                   </button>
                   <button
-                    onClick={() => setDismissed((s) => new Set(s).add(d.id))}
+                    onClick={() => dismiss(d.id, d.musicId)}
                     className="text-muted-foreground hover:text-foreground"
                     title="Dismiss"
                   >

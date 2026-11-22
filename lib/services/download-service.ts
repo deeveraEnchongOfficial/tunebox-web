@@ -76,6 +76,18 @@ export const downloadService = {
     return sweepIfStale(await latestDownload(musicId));
   },
 
+  // User cleared a failed download from the widget — tombstone the row
+  // so it stops surfacing, without touching the music record.
+  async dismiss(userId: string, musicId: string) {
+    await ownedMusic(userId, musicId);
+    const download = await sweepIfStale(await latestDownload(musicId));
+    if (!download || download.status === 'DELETED') return null;
+    return prisma.download.update({
+      where: { id: download.id },
+      data: { status: 'DELETED' },
+    });
+  },
+
   // Self-contained job body — a future standalone worker can call this
   // unchanged.
   async process(downloadId: string): Promise<void> {

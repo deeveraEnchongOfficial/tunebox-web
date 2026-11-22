@@ -221,6 +221,67 @@ export function GlobalPlayer() {
     }
   }, [player.volume, player.muted]);
 
+  // Media Session — OS-level transport controls (Bluetooth headsets, car
+  // stereos, lock screen) read metadata and route their buttons here.
+  React.useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = current
+      ? new MediaMetadata({
+          title: current.title,
+          artist: current.artist ?? current.channelName ?? 'Unknown',
+          album: 'TuneBox',
+          artwork: current.thumbnailUrl ? [{ src: current.thumbnailUrl }] : [],
+        })
+      : null;
+  }, [current]);
+
+  React.useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.playbackState = !current
+      ? 'none'
+      : player.isPlaying
+        ? 'playing'
+        : 'paused';
+  }, [current, player.isPlaying]);
+
+  // No dep array — re-register every render so handlers close over the
+  // latest player state (index, queue, progress, duration).
+  React.useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    const ms = navigator.mediaSession;
+    const dur = duration || current?.durationSeconds || 0;
+    ms.setActionHandler('play', () => {
+      if (!player.isPlaying) player.togglePlay();
+    });
+    ms.setActionHandler('pause', () => {
+      if (player.isPlaying) player.togglePlay();
+    });
+    ms.setActionHandler('previoustrack', () => player.previous());
+    ms.setActionHandler('nexttrack', () => player.next());
+    ms.setActionHandler('seekto', (d) => {
+      if (d.seekTime != null && dur > 0) handleSeek((d.seekTime / dur) * 100);
+    });
+    ms.setActionHandler('seekbackward', (d) => {
+      if (dur > 0) handleSeek(Math.max(0, ((progress - (d.seekOffset ?? 10)) / dur) * 100));
+    });
+    ms.setActionHandler('seekforward', (d) => {
+      if (dur > 0) handleSeek(Math.min(100, ((progress + (d.seekOffset ?? 10)) / dur) * 100));
+    });
+  });
+
+  // Position state — shows the scrubber/progress on lock screens & BT devices.
+  React.useEffect(() => {
+    if (!('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) return;
+    if (!duration || !Number.isFinite(duration) || duration <= 0) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration,
+        playbackRate: 1,
+        position: Math.min(Math.max(0, progress), duration),
+      });
+    } catch {}
+  }, [progress, duration]);
+
   if (!current) return null;
 
   const filePlayback = current.sourceType === 'AUTHORIZED_AUDIO' || !!current.streamUrl;
