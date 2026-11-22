@@ -1,6 +1,6 @@
 'use client';
 
-import { Music, Play, Pause, Heart, Trash2, Loader2, ListMusic, Download, Check, RotateCcw } from 'lucide-react';
+import { Music, Play, Pause, Heart, Trash2, Loader2, ListMusic, Download, Check, RotateCcw, Clock } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { usePlayer, type QueueItem } from '@/lib/player';
@@ -63,16 +63,33 @@ export function TrackRow({
     <div
       onClick={play}
       className={cn(
-        'group grid grid-cols-[16px_1fr_auto] sm:grid-cols-[16px_4rem_1fr_auto] items-center gap-3 rounded-md px-2 sm:px-4 py-2 transition-colors',
+        'group grid grid-cols-[2.5rem_1fr_auto] sm:grid-cols-[1rem_2.5rem_1fr_auto] items-center gap-3 rounded-md px-2 sm:px-4 py-1.5 sm:py-2 transition-colors',
         isCurrent ? 'bg-white/10' : 'hover:bg-white/5',
       )}
     >
-      {/* Index / play button */}
-      <div className="flex items-center justify-center w-4">
-        {isPlaying ? (
-          <button onClick={play} className="text-primary" aria-label="Pause">
-            <Pause className="h-4 w-4" />
-          </button>
+      {/* Index / playing indicator — desktop only, Spotify style */}
+      <div className="hidden sm:flex items-center justify-center w-4">
+        {isCurrent ? (
+          <>
+            <span className="group-hover:hidden">
+              {isPlaying ? (
+                <span className="flex items-end gap-px h-3.5" aria-hidden>
+                  <span className="eq-bar w-[3px] h-full bg-primary rounded-sm" style={{ animationDelay: '0s' }} />
+                  <span className="eq-bar w-[3px] h-full bg-primary rounded-sm" style={{ animationDelay: '0.25s' }} />
+                  <span className="eq-bar w-[3px] h-full bg-primary rounded-sm" style={{ animationDelay: '0.5s' }} />
+                </span>
+              ) : (
+                <Play className="h-3.5 w-3.5 text-primary fill-primary" />
+              )}
+            </span>
+            <button
+              onClick={play}
+              className="hidden text-foreground group-hover:flex"
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </button>
+          </>
         ) : (
           <>
             <span className="text-sm text-muted-foreground tabular-nums group-hover:hidden">
@@ -89,8 +106,8 @@ export function TrackRow({
         )}
       </div>
 
-      {/* Thumbnail (hidden on smallest) */}
-      <div className="hidden sm:block shrink-0">
+      {/* Thumbnail */}
+      <div className="relative shrink-0">
         {track.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -102,6 +119,16 @@ export function TrackRow({
           <div className="flex h-10 w-10 items-center justify-center rounded bg-muted">
             <Music className="h-4 w-4 text-muted-foreground" />
           </div>
+        )}
+        {/* Mobile playing badge — no index column on small screens */}
+        {isCurrent && isPlaying && (
+          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary sm:hidden" aria-hidden>
+            <span className="flex items-end gap-px h-2">
+              <span className="eq-bar w-[2px] h-full bg-primary-foreground" style={{ animationDelay: '0s' }} />
+              <span className="eq-bar w-[2px] h-full bg-primary-foreground" style={{ animationDelay: '0.25s' }} />
+              <span className="eq-bar w-[2px] h-full bg-primary-foreground" style={{ animationDelay: '0.5s' }} />
+            </span>
+          </span>
         )}
       </div>
 
@@ -204,6 +231,20 @@ export function TrackRow({
         )}
         {trailing}
       </div>
+    </div>
+  );
+}
+
+/** Spotify-style column header for track lists (desktop only). */
+export function TrackListHeader() {
+  return (
+    <div className="sticky top-16 z-10 hidden sm:grid grid-cols-[1rem_2.5rem_1fr_auto] items-center gap-3 border-b border-white/10 bg-background/95 backdrop-blur px-4 py-2 mb-2 text-xs uppercase tracking-wider text-muted-foreground">
+      <span className="text-center">#</span>
+      <span />
+      <span>Title</span>
+      <span className="flex justify-end pr-2">
+        <Clock className="h-4 w-4" />
+      </span>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { TrackRow, mapToQueue, type TrackRowItem } from '@/components/track-row';
+import { TrackRow, TrackListHeader, mapToQueue, type TrackRowItem } from '@/components/track-row';
 
 interface MusicListProps {
   music: TrackRowItem[];
@@ -145,6 +145,7 @@ export function MusicList({ music, favoriteIds }: MusicListProps) {
 
   return (
     <div className="flex flex-col gap-0.5">
+      <TrackListHeader />
       {visible.map((item, index) => (
         <TrackRow
           key={item.id}

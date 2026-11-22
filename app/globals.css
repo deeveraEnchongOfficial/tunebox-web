@@ -112,6 +112,18 @@
   }
 }
 
+/* Spotify "now playing" equalizer bars */
+@keyframes eq-bounce {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+@layer utilities {
+  .eq-bar {
+    transform-origin: bottom;
+    animation: eq-bounce 0.9s ease-in-out infinite;
+  }
+}
+
 /* Spotify-style scrollbar */
 @layer utilities {
   .scrollbar-thin {

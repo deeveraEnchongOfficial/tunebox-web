@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Link as LinkIcon, Loader2, Music, Heart, ListPlus, Bookmark } from 'lucide-react';
+import { Link as LinkIcon, Loader2, Music, Bookmark } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -113,7 +113,7 @@ export default function AddMusicPage() {
               </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={resolving || !url.trim()} className="w-fit">
+            <Button type="submit" disabled={resolving || !url.trim()} className="w-fit rounded-full px-6 font-bold">
               {resolving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -164,8 +164,8 @@ export default function AddMusicPage() {
                 <p className="font-medium">Saved to your library!</p>
               </div>
             ) : (
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button onClick={handleSave} disabled={saving}>
+              <div className="mt-6">
+                <Button onClick={handleSave} disabled={saving} className="rounded-full px-6 font-bold">
                   {saving ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -177,14 +177,6 @@ export default function AddMusicPage() {
                       Save to library
                     </>
                   )}
-                </Button>
-                <Button variant="secondary" disabled>
-                  <Heart className="h-4 w-4" />
-                  Favorite
-                </Button>
-                <Button variant="secondary" disabled>
-                  <ListPlus className="h-4 w-4" />
-                  Add to playlist
                 </Button>
               </div>
             )}

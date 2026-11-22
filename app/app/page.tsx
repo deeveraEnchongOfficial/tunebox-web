@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Music, Heart, ListMusic, Library } from 'lucide-react';
+import { Plus, Library } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { MediaCard } from '@/components/media-card';
@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
 import { playbackFields, visibleInLibrary } from '@/lib/services/music-service';
 import { TopBar } from './top-bar';
+import { RecentTiles } from './recent-tiles';
 import type { QueueItem } from '@/lib/player';
 
 const musicSelect = {
@@ -29,10 +30,7 @@ export default async function AppHomePage() {
   const user = await getSessionUser();
   if (!user) return null;
 
-  const [musicCount, favoritesCount, playlistsCount, recentMusic, playlists] = await Promise.all([
-    prisma.music.count({ where: { userId: user.id } }),
-    prisma.favorite.count({ where: { userId: user.id } }),
-    prisma.playlist.count({ where: { userId: user.id } }),
+  const [recentMusic, playlists] = await Promise.all([
     prisma.music.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
@@ -73,12 +71,6 @@ export default async function AppHomePage() {
   const greeting =
     hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  const quickStats = [
-    { label: 'Songs', value: musicCount, icon: Music, href: '/app/library' },
-    { label: 'Favorites', value: favoritesCount, icon: Heart, href: '/app/library' },
-    { label: 'Playlists', value: playlistsCount, icon: ListMusic, href: '/app/playlists' },
-  ];
-
   return (
     <div className="relative">
       {/* Gradient header banner */}
@@ -91,27 +83,8 @@ export default async function AppHomePage() {
           {greeting}, {user.name}
         </h1>
 
-        {/* Quick stat tiles — Spotify style */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-10">
-          {quickStats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Link
-                key={stat.label}
-                href={stat.href}
-                className="group flex items-center gap-4 rounded-lg bg-white/10 hover:bg-white/20 transition-colors p-4 h-16 overflow-hidden"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded bg-linear-to-br from-primary/80 to-primary/40 shrink-0">
-                  <Icon className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <span className="text-base md:text-lg font-bold truncate">{stat.label}</span>
-                <span className="ml-auto text-sm font-bold text-muted-foreground tabular-nums hidden sm:block">
-                  {stat.value}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+        {/* Recents grid — Spotify style */}
+        {recentQueue.length > 0 && <RecentTiles queue={recentQueue.slice(0, 8)} />}
 
         {/* Recently added */}
         <section className="mb-10">

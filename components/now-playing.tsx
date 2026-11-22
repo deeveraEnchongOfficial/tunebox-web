@@ -40,9 +40,20 @@ export function NowPlaying({
   const progressPercent = duration ? (progress / duration) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 z-60 flex flex-col bg-linear-to-b from-indigo-900/60 via-background to-background animate-in fade-in slide-in-from-bottom duration-300">
+    <div className="fixed inset-0 z-60 flex flex-col overflow-hidden bg-background animate-in fade-in slide-in-from-bottom duration-300">
+      {/* Artwork-derived backdrop */}
+      {current.thumbnailUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={current.thumbnailUrl}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full scale-125 object-cover blur-3xl opacity-40"
+        />
+      )}
+      <div className="absolute inset-0 bg-linear-to-b from-black/30 via-background/70 to-background" />
       {/* Header */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-4">
+      <div className="relative flex items-center justify-between px-4 md:px-6 py-4">
         <button
           onClick={() => player.setExpanded(false)}
           className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
@@ -57,7 +68,7 @@ export function NowPlaying({
       </div>
 
       {/* Artwork */}
-      <div className="flex-1 flex items-center justify-center px-6 md:px-12 min-h-0 py-6">
+      <div className="relative flex-1 flex items-center justify-center px-6 md:px-12 min-h-0 py-6">
         {current.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -73,7 +84,7 @@ export function NowPlaying({
       </div>
 
       {/* Track info + controls */}
-      <div className="flex flex-col gap-4 px-4 md:px-12 pb-8 md:pb-12 max-w-3xl w-full mx-auto">
+      <div className="relative flex flex-col gap-4 px-4 md:px-12 pb-8 md:pb-12 max-w-3xl w-full mx-auto">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-xl md:text-3xl font-extrabold tracking-tight truncate">

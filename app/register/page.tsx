@@ -88,7 +88,7 @@ export default function RegisterPage() {
             />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" size="lg" disabled={loading} className="w-full">
+          <Button type="submit" size="lg" disabled={loading} className="w-full rounded-full font-bold">
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             Create account
           </Button>

@@ -5,7 +5,7 @@ import { type QueueItem } from '@/lib/player';
 import { getSessionUser } from '@/lib/auth/session';
 import { AddTracksDialog } from './add-tracks-dialog';
 import { PlaylistTrackList } from './playlist-track-list';
-import { PlaylistPlayButtonClient } from './playlist-play-button';
+import { QueueControls } from '@/components/queue-controls';
 import { prisma } from '@/lib/db';
 import { playbackFields, visibleInLibrary } from '@/lib/services/music-service';
 import { TopBar } from '../../top-bar';
@@ -87,9 +87,9 @@ export default async function PlaylistDetailPage({
           </div>
         </div>
 
-        {/* Action row: big green play + add tracks */}
+        {/* Action row: big green play + shuffle + add tracks */}
         <div className="flex items-center gap-4 mb-6">
-          <PlaylistPlayButtonClient queue={queue} />
+          <QueueControls queue={queue} />
           <AddTracksDialog
             playlistId={playlist.id}
             existingIds={new Set(playlist.items.map((i) => i.musicId))}

@@ -325,11 +325,10 @@ export function GlobalPlayer() {
         />
       )}
 
-    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 bg-black border-t border-white/5">
       {current.sourceType === 'YOUTUBE' && !current.streamUrl && (
         <div
           id={playerId}
-          className="fixed bottom-24 md:bottom-20 right-3 z-50 w-44 h-24 sm:w-64 sm:h-36 rounded-lg overflow-hidden shadow-xl bg-black"
+          className="fixed bottom-36 md:bottom-20 right-3 z-50 w-44 h-24 sm:w-64 sm:h-36 rounded-lg overflow-hidden shadow-xl bg-black"
         />
       )}
 
@@ -347,33 +346,71 @@ export function GlobalPlayer() {
         )}
       </div>
 
-      <div className="flex h-16 md:h-20 items-center gap-2 px-2 sm:px-4">
+      {/* Mobile mini player — floating card above the tab bar */}
+      <div className="fixed bottom-18 left-2 right-2 z-50 md:hidden">
+        <div className="relative overflow-hidden rounded-lg bg-secondary/90 backdrop-blur-md shadow-xl">
+          <button
+            onClick={() => player.setExpanded(true)}
+            className="flex w-full items-center gap-3 p-2 pr-14 text-left"
+            aria-label="Expand now playing"
+          >
+            {current.thumbnailUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={current.thumbnailUrl} alt={current.title} className="h-11 w-11 rounded object-cover shrink-0" />
+            ) : (
+              <div className="flex h-11 w-11 items-center justify-center rounded bg-muted shrink-0">
+                <span className="text-xs">🎵</span>
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{current.title}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {current.artist ?? current.channelName ?? 'Unknown'}
+              </p>
+            </div>
+          </button>
+          <button
+            onClick={player.togglePlay}
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center text-foreground"
+            aria-label={player.isPlaying ? 'Pause' : 'Play'}
+          >
+            {player.isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+          </button>
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
+            <div className="h-full bg-primary" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop player bar */}
+      <div className="hidden md:block fixed bottom-0 left-0 right-0 z-50 bg-black border-t border-white/5">
+      <div className="flex h-20 items-center gap-2 px-4">
         {/* Left: track info — click to expand */}
         <button
           onClick={() => player.setExpanded(true)}
-          className="flex items-center gap-3 shrink-0 w-[40%] md:w-[30%] min-w-0 text-left hover:bg-white/5 -mx-2 px-2 py-1 rounded transition-colors"
+          className="flex items-center gap-3 shrink-0 w-[30%] min-w-0 text-left hover:bg-white/5 -mx-2 px-2 py-1 rounded transition-colors"
           aria-label="Expand now playing"
         >
           {current.thumbnailUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={current.thumbnailUrl} alt={current.title} className="h-10 w-10 md:h-14 md:w-14 rounded object-cover shrink-0" />
+            <img src={current.thumbnailUrl} alt={current.title} className="h-14 w-14 rounded object-cover shrink-0" />
           ) : (
-            <div className="flex h-10 w-10 md:h-14 md:w-14 items-center justify-center rounded bg-muted shrink-0">
+            <div className="flex h-14 w-14 items-center justify-center rounded bg-muted shrink-0">
               <span className="text-xs">🎵</span>
             </div>
           )}
-          <div className="min-w-0 hidden sm:block flex-1">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{current.title}</p>
             <p className="truncate text-xs text-muted-foreground">
               {current.artist ?? current.channelName ?? 'Unknown'}
             </p>
           </div>
-          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
+          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
         </button>
 
         {/* Center: transport + seek */}
         <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-4 shrink-0">
             <Button
               size="icon"
               variant="ghost"
@@ -384,9 +421,9 @@ export function GlobalPlayer() {
             </Button>
             <button
               onClick={player.togglePlay}
-              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-foreground hover:scale-110 transition-transform"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background hover:scale-105 transition-transform"
             >
-              {player.isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              {player.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </button>
             <Button
               size="icon"
@@ -398,8 +435,8 @@ export function GlobalPlayer() {
             </Button>
           </div>
 
-          {/* Seek bar — hidden on mobile, shown on sm+ */}
-          <div className="hidden sm:flex w-full max-w-xl items-center gap-2 min-w-0">
+          {/* Seek bar */}
+          <div className="flex w-full max-w-xl items-center gap-2 min-w-0">
             <span className="w-10 text-right text-[11px] text-muted-foreground tabular-nums">
               {formatTime(progress)}
             </span>
@@ -427,8 +464,8 @@ export function GlobalPlayer() {
           </div>
         </div>
 
-        {/* Right: shuffle/repeat/volume — hidden on mobile */}
-        <div className="hidden md:flex items-center gap-2 shrink-0 w-[30%] justify-end">
+        {/* Right: shuffle/repeat/volume */}
+        <div className="flex items-center gap-2 shrink-0 w-[30%] justify-end">
           <Button
             size="icon"
             variant="ghost"

@@ -1,6 +1,6 @@
 'use client';
 
-import { TrackRow, type TrackRowItem } from '@/components/track-row';
+import { TrackRow, TrackListHeader, type TrackRowItem } from '@/components/track-row';
 import { type QueueItem } from '@/lib/player';
 import { RemoveFromPlaylistButton } from './remove-from-playlist-button';
 
@@ -15,6 +15,7 @@ export function PlaylistTrackList({
 
   return (
     <div className="flex flex-col gap-0.5">
+      <TrackListHeader />
       {tracks.map((track, index) => (
         <TrackRow
           key={track.id}

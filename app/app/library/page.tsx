@@ -3,6 +3,7 @@ import { Heart, Library } from 'lucide-react';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
 import { playbackFields, visibleInLibrary } from '@/lib/services/music-service';
+import { QueueControls } from '@/components/queue-controls';
 import { MusicList } from './music-list';
 import { TopBar } from '../top-bar';
 
@@ -66,6 +67,24 @@ export default async function LibraryPage() {
             </p>
           </div>
         </div>
+
+        {visibleMusic.length > 0 && (
+          <div className="mb-6">
+            <QueueControls
+              queue={visibleMusic.map((m) => ({
+                id: m.id,
+                title: m.title,
+                artist: m.artist,
+                channelName: m.channelName,
+                thumbnailUrl: m.thumbnailUrl,
+                sourceUrl: m.sourceUrl,
+                sourceType: m.sourceType,
+                durationSeconds: m.durationSeconds,
+                streamUrl: m.streamUrl,
+              }))}
+            />
+          </div>
+        )}
 
         {visibleMusic.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
