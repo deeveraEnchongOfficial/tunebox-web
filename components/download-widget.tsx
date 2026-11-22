@@ -101,7 +101,7 @@ export function DownloadWidget() {
                 <>
                   {d.error && (
                     <button
-                      onClick={() => copyError(d.id, d.error)}
+                      onClick={() => copyError(d.id, d.error!)}
                       className="text-muted-foreground hover:text-foreground"
                       title="Copy error"
                     >
